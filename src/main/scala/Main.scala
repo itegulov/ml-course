@@ -17,7 +17,7 @@ object Main extends App {
   val accuracies = for (k <- 1 to 20) yield {
     val results = folds.map {
       case (train, test) =>
-        val resultMethod = KNNMethod.train(train, k, Distances.euclidean, Weights.euclidean)
+        val resultMethod = KNNMethod.train(train, k, Distances.generalizedEuclidean(1.0, 2.0), Weights.euclidean)
         val hits = test.map {
           case PointWithClass(point, pointClass) =>
             if (resultMethod(point) != pointClass) 0 else 1
