@@ -4,31 +4,35 @@ import scala.util.Random
 
 object GeneticAlgorithm {
   def loss(houses: Seq[HouseWithPrice])(w0: Double, w1: Double): Double = {
-    houses.map {
+    val sum = houses.map {
       case HouseWithPrice(House(area, rooms), price) =>
         val predictedPrice = w0 * area + w1 * rooms
         Math.pow(price - predictedPrice, 2)
     }.sum
+
+    Math.pow(sum, 0.5) / houses.length
   }
 
   def apply(houses: Seq[HouseWithPrice], w0: Double, w1: Double): (Double, Double) = {
+    val thisLoss: ((Double, Double) => Double) = loss(houses)
     var brood = Seq((w0, w1))
-    for (i <- 1 to 10) {
+    for (i <- 1 to 100) {
       val crossBrood = for (
         (w0f, w1f) <- brood;
-        (w0s, w1s) <- brood
-      ) yield (w0f + Random.nextDouble * (w0s - w0f), w1f + Random.nextDouble * (w1s - w1f))
+        (w0s, w1s) <- brood;
+        coefficient = Random.nextDouble
+      ) yield (w0f + coefficient * (w0s - w0f), w1f + coefficient * (w1s - w1f))
 
-      val mutations = for ((w0, w1) <- brood) yield
-        (w0 + 1000 * (Random.nextDouble() - 0.5), w1 + 1000000 * (Random.nextDouble() - 0.5))
+      val mutations = for ((w0, w1) <- brood; times <- 1 to 10) yield
+        (w0 + 5 * (Random.nextDouble() - 0.5), w1 + 10000 * (Random.nextDouble() - 0.5))
 
       val newBrood = crossBrood ++ mutations
-      brood = newBrood.sortBy {
-        case (f, s) => loss(houses)(f, s)
-      }.take(100)
+      val temp = newBrood.map(thisLoss.tupled)
+      brood = newBrood.sortBy(thisLoss.tupled).take(50)
+      println(brood.map(thisLoss.tupled))
     }
-    brood.sortBy {
+    brood.minBy {
       case (f, s) => loss(houses)(f, s)
-    }.head
+    }
   }
 }

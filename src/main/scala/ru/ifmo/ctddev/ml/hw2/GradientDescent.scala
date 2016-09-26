@@ -5,8 +5,8 @@ package ru.ifmo.ctddev.ml.hw2
   */
 object GradientDescent {
   def gradientDescent(houses: Seq[HouseWithPrice], ww1: Double, ww2: Double): (Double, Double) = {
-    val q: (Double, Double) => Double =
-      (w1, w2) => houses.map {
+    def q(w1: Double, w2: Double): Double =
+      houses.map {
         case HouseWithPrice(house, price) => Math.pow(house.area * w1 + house.rooms * w2 - price, 2)
       }.sum
     def rec : (Double, Double) => (Double) => (Double, Double) =

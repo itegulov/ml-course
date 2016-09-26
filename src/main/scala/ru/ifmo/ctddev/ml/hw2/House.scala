@@ -4,9 +4,9 @@ import java.io.{File, FileReader, InputStream, InputStreamReader}
 
 import breeze.io.CSVReader
 
-case class House(area: Int, rooms: Int)
+case class House(area: Long, rooms: Long)
 
-case class HouseWithPrice(house: House, price: Int)
+case class HouseWithPrice(house: House, price: Long)
 
 object HouseWithPrice {
   def parseData(csvFile: InputStream): Seq[HouseWithPrice] = {
