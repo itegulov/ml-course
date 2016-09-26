@@ -11,10 +11,10 @@ object GradientDescent {
       }.sum
     def rec : (Double, Double) => (Double) => (Double, Double) =
       (w1, w2) => (step) => if (step < 0.00005) (w1, w2)
-      else rec.tupled(Seq(-1, 0, 1).zip(Seq(-1, 0, 1))
+      else rec.tupled((for (x <- Seq(-1, 0, 1); y <- Seq(-1, 0, 1)) yield (x, y))
         .map { case (i, j) => (w1 + i * step, w2 + j * step) }
         .map { case (i, j) => (q(i, j), (i, j)) }.min._2) (step / 2)
-    rec(ww1, ww2)(10000)
+    rec(ww1, ww2)(100000)
 
 
 
