@@ -6,7 +6,11 @@ import breeze.io.CSVReader
 
 case class House(area: Long, rooms: Long)
 
+case class NormalizedHouse(area: Double, rooms: Double)
+
 case class HouseWithPrice(house: House, price: Long)
+
+case class NormalizedHouseWithPrice(house: NormalizedHouse, price: Double)
 
 object HouseWithPrice {
   def parseData(csvFile: InputStream): Seq[HouseWithPrice] = {
