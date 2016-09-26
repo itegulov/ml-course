@@ -18,4 +18,7 @@ object Distances {
   val generalizedManhattan: (Double, Double) => Distance = generalizedMinkowski(1)
 
   val generalizedEuclidean: (Double, Double) => Distance = generalizedMinkowski(2)
+
+  def kernelize(d : Distance, kernel : Double => Double) : Distance =
+    (f, s) => kernel(d(f, s))
 }
