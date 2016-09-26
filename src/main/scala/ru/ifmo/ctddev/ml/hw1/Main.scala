@@ -18,6 +18,14 @@ object Main {
     }
   }
 
+  def polarize(points: Seq[PointWithClass]): Seq[PointWithClass] = {
+    for (PointWithClass(Point(x, y), pClass) <- points) yield {
+      val r = Math.sqrt(x * x + y * y)
+      val phi = Math.atan2(y, x)
+      PointWithClass(Point(r, phi), pClass)
+    }
+  }
+
   def drawPoints(zeros: Seq[PointWithClass], ones: Seq[PointWithClass]): Unit = {
     val pointsFigure = Figure()
     val pointsPlot = pointsFigure.subplot(0)
@@ -45,12 +53,11 @@ object Main {
     ("Triangle", x => 1 - x),
     ("Uniform", x => 0.5),
     ("Quartic", x => (1 - x * x) * 0.75),
-    ("Cosine", x => Math.cos(x * 2 / Math.PI))
+    ("Cosine", x => Math.cos(x * Math.PI / 2))
   )
 
   val metrics = Seq[(String, (Point, Point) => Double)](
-    ("Euclid", Distances.euclidean),
-    ("Manhattan", Distances.manhattan)
+    ("Euclid", Distances.euclidean)
   )
 
   val weightDistances = Seq[(String, (Point, Point) => Double)](
@@ -69,7 +76,7 @@ object Main {
 
       val weight = Distances.kernelize((f, s) => weightDistance(f, s) / maxDistance, kernel)
       val initSamples = PointWithClass.parseData(new File(getClass.getResource("/chips.txt").toURI))
-      val samples = normalize(initSamples)
+      val samples = normalize(polarize(initSamples))
       val (zeros, ones) = samples.partition(_.pointClass == Zero)
 
 //      drawPoints(zeros, ones)
