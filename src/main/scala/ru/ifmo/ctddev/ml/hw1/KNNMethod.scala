@@ -1,7 +1,6 @@
 package ru.ifmo.ctddev.ml.hw1
 
 import ru.ifmo.ctddev.ml.hw1.Distances._
-import ru.ifmo.ctddev.ml.hw1.Weights._
 
 object KNNMethod {
   /**
@@ -13,9 +12,9 @@ object KNNMethod {
   def train(points: Seq[PointWithClass],
             k: Int,
             distance: Distance,
-            weight: Weight): (Point => PointClass) =
+            weight: Distance): (Point => PointClass) =
     requestPoint => {
-      val neighbours = points.sortBy(p => distance(p.point, requestPoint)).take(k) // TODO: normalize?
+      val neighbours = points.sortBy(p => distance(p.point, requestPoint)).take(k)
       val (zero, one) = neighbours.partition(_.pointClass == Zero)
       val zeroValue = zero.map(z => weight(requestPoint, z.point)).sum
       val oneValue = one.map(o => weight(requestPoint, o.point)).sum
