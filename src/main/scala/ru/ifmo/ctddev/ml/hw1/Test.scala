@@ -1,7 +1,9 @@
+package ru.ifmo.ctddev.ml.hw1
+
 import java.awt.Color
 import java.io.File
 
-import breeze.plot.{Figure, _}
+import breeze.plot._
 
 /**
   * Created by Aleksei Latyshev on 26.09.2016.
