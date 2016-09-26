@@ -1,3 +1,5 @@
+package ru.ifmo.ctddev.ml.hw1
+
 object Weights {
   type Weight = (Point, Point) => Double
 

@@ -1,3 +1,5 @@
+package ru.ifmo.ctddev.ml.hw1
+
 import java.io.{File, FileReader}
 
 import breeze.io.CSVReader

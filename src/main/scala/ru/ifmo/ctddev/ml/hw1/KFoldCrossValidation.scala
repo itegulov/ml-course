@@ -1,3 +1,5 @@
+package ru.ifmo.ctddev.ml.hw1
+
 import scala.util.Random
 
 object KFoldCrossValidation {

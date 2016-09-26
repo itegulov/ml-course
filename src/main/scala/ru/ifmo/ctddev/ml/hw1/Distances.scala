@@ -1,4 +1,6 @@
-import Math.pow
+package ru.ifmo.ctddev.ml.hw1
+
+import java.lang.Math.pow
 
 object Distances {
   type Distance = (Point, Point) => Double

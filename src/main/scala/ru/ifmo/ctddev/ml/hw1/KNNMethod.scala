@@ -1,5 +1,7 @@
-import Distances.Distance
-import Weights.Weight
+package ru.ifmo.ctddev.ml.hw1
+
+import ru.ifmo.ctddev.ml.hw1.Distances._
+import ru.ifmo.ctddev.ml.hw1.Weights._
 
 object KNNMethod {
   /**
