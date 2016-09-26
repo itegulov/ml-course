@@ -8,7 +8,7 @@ import breeze.plot._
 
 object Main extends App {
   val samples = HouseWithPrice.parseData(getClass.getResourceAsStream("/prices.txt"))
-  val (wgd0, wgd1) = GradientDescent.gradientDescent(samples, 100, 10000)
+  val (wgd0, wgd1) = GradientDescent(samples, 100, 10000)
   val (wga0, wga1) = GeneticAlgorithm(samples, 0, 0)
 
   println(GeneticAlgorithm.loss(samples)(wgd0, wgd1))
