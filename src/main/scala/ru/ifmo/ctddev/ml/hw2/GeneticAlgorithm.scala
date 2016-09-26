@@ -20,7 +20,7 @@ object GeneticAlgorithm {
       ) yield (w0f + Random.nextDouble * (w0s - w0f), w1f + Random.nextDouble * (w1s - w1f))
 
       val mutations = for ((w0, w1) <- brood) yield
-        (w0 + 100 * Random.nextDouble(), w1 + 100000 * Random.nextDouble())
+        (w0 + 1000 * (Random.nextDouble() - 0.5), w1 + 1000000 * (Random.nextDouble() - 0.5))
 
       val newBrood = crossBrood ++ mutations
       brood = newBrood.sortBy {
