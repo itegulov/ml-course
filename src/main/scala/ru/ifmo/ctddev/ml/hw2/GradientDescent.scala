@@ -8,8 +8,8 @@ object GradientDescent extends LinearFitter {
     case h +: t => for(xh <- h; xt <- cartesianProduct( t)) yield xh +: xt
     case _ => Seq(Seq())
   }
-  val firstStep : Double = 0.5
-  val eps : Double = 0.0005
+  val firstStep : Double = 2
+  val eps : Double = 0.000005
   override def fit(initialCoefficients: Seq[Double],
                      loss: Seq[Double] => Double): Seq[Double] = {
     def rec(ws : Seq[Double], step : Double) : Seq[Double] = {

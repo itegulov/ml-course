@@ -31,8 +31,8 @@ object Main {
     areaPlot.title = "Area"
 
     val areaLinspace = linspace(0, 5000.0)
-    areaPlot += plot(areaLinspace, areaLinspace.map(_ * geneticUnnormalizedCoefficients.head), '.')
-    areaPlot += plot(areaLinspace, areaLinspace.map(_ * gradientUnnormalizedCoefficients.head), '.')
+    areaPlot += plot(areaLinspace, areaLinspace.map(v => geneticPredictor(Seq(v, 0, 1))), '.')
+    areaPlot += plot(areaLinspace, areaLinspace.map(v => gradientPredictor(Seq(v, 0, 1))), '.')
 
     val normFigure = Figure()
     val normPlot = normFigure.subplot(0)
@@ -45,8 +45,8 @@ object Main {
     while (true) {
       val area = StdIn.readInt()
       val rooms = StdIn.readInt()
-      println("Genetic-predicted price: " + geneticPredictor(Seq(area, rooms)))
-      println("Gradient-predicted price: " + gradientPredictor(Seq(area, rooms)))
+      println("Genetic-predicted price: " + geneticPredictor(Seq(area, rooms, 1)))
+      println("Gradient-predicted price: " + gradientPredictor(Seq(area, rooms, 1)))
     }
   }
 }

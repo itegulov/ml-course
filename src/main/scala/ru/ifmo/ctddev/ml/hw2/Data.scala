@@ -31,9 +31,9 @@ object Data {
     val sigmaZ = sigma.last
     val meanZ = mean.last
     coefficients.zip(sigma).map{
-      case (x, y) => x / y * meanZ
+      case (x, y) => x / y * sigmaZ
     } :+ (meanZ - mean.zip(sigma).zip(coefficients).map({
-      case ((x, y), z) => x * z / y
+      case ((x, y), z) => x * z / y * sigmaZ
     }).sum)
   }
 }
