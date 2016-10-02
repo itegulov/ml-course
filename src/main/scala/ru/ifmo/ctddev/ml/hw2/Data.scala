@@ -16,7 +16,7 @@ object Data {
     val (normFeatures, meanFeatures, sigmaFeatures) = rec(list.map(_.features))
     val normObjects = normFeatures.transpose
     val normalized = normObjects.zip(normAnswers).map {
-      case (list1, list2) => Data(list1, list2)
+      case (features, answer) => Data(features, answer)
     }
     (normalized, meanFeatures :+ meanAnswers, sigmaFeatures :+ sigmaAnswers)
   }

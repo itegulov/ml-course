@@ -12,18 +12,21 @@ object Main {
 
   def main(args: Array[String]): Unit = {
     val houses = HouseWithPrice.parseHouses(getClass.getResourceAsStream("/prices.txt"))
-    val (data, means, sigmas) = Data.normalize(houses.map(_.toData))
+    val unnormalizedData = houses.map(_.toData)
+    val (data, means, sigmas) = Data.normalize(unnormalizedData)
     val geneticCoefficients = GeneticAlgorithm.fit(Seq(0, 0), Utils.mseLoss(data))
     println(s"Coefficients from genetic algorithm: ${geneticCoefficients.mkString(", ")}")
     val geneticUnnormalizedCoefficients = Data.unnormalize(geneticCoefficients, means, sigmas)
     println(s"Unnormalized coefficients from genetic algorithm: ${geneticUnnormalizedCoefficients.mkString(", ")}")
     val geneticPredictor = LinearRegression(geneticUnnormalizedCoefficients)
+    println(s"MSE for genetic is ${Utils.mseLoss(unnormalizedData)(geneticUnnormalizedCoefficients)}")
 
     val gradientCoefficients = GradientDescent.fit(Seq(0, 0), Utils.mseLoss(data))
     println(s"Coefficients from gradient algorithm: ${gradientCoefficients.mkString(", ")}")
     val gradientUnnormalizedCoefficients = Data.unnormalize(gradientCoefficients, means, sigmas)
     println(s"Unnormalized coefficients from gradient algorithm: ${gradientUnnormalizedCoefficients.mkString(", ")}")
     val gradientPredictor = LinearRegression(gradientUnnormalizedCoefficients)
+    println(s"MSE for gradient is ${Utils.mseLoss(unnormalizedData)(gradientUnnormalizedCoefficients)}")
 
     val areaFigure = Figure()
     val areaPlot = areaFigure.subplot(0)

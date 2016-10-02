@@ -9,7 +9,7 @@ object GradientDescent extends LinearFitter {
     case _ => Seq(Seq())
   }
   val firstStep : Double = 2
-  val eps : Double = 0.000005
+  val eps : Double = 0.00005
   override def fit(initialCoefficients: Seq[Double],
                      loss: Seq[Double] => Double): Seq[Double] = {
     def rec(ws : Seq[Double], step : Double) : Seq[Double] = {

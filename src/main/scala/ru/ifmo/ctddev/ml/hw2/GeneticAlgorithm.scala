@@ -5,7 +5,7 @@ import scala.util.Random
 object GeneticAlgorithm extends LinearFitter {
   override def fit(initialCoefficients: Seq[Double], loss: Seq[Double] => Double): Seq[Double] = {
     var brood = Seq(initialCoefficients)
-    for (i <- 1 to 40) {
+    for (i <- 1 to 50) {
       val newBrood = for (
         individual <- brood;
         times <- 1 to 6
