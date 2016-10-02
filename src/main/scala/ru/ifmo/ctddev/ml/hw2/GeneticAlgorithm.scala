@@ -2,8 +2,8 @@ package ru.ifmo.ctddev.ml.hw2
 
 import scala.util.Random
 
-object GeneticAlgorithm extends LinearSolver {
-  override def solve(dataSet: Seq[Data],
+object GeneticAlgorithm extends LinearFitter {
+  override def fit(dataSet: Seq[Data],
                      initialCoefficients: Seq[Double],
                      loss: Seq[Double] => Double): Seq[Double] = {
     var brood = Seq(initialCoefficients)
