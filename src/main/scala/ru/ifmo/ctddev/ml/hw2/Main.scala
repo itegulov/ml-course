@@ -21,7 +21,9 @@ object Main {
 
     val gradientCoefficients = GradientDescent.fit(Seq(0, 0), Utils.mseLoss(data))
     println(s"Coefficients from gradient algorithm: ${gradientCoefficients.mkString(", ")}")
-    val gradientPredictor = LinearRegression(Data.unnormalize(geneticCoefficients, means, sigmas))
+    val gradientUnnormalizedCoefficients = Data.unnormalize(gradientCoefficients, means, sigmas)
+    println(s"Unnormalized coefficients from gradient algorithm: ${gradientUnnormalizedCoefficients.mkString(", ")}")
+    val gradientPredictor = LinearRegression(gradientUnnormalizedCoefficients)
 
     val areaFigure = Figure()
     val areaPlot = areaFigure.subplot(0)
@@ -36,7 +38,7 @@ object Main {
       val area = StdIn.readInt()
       val rooms = StdIn.readInt()
       println("Genetic-predicted price: " + geneticPredictor(Seq(area, rooms)))
-//      println("Gradient-predicted price: " + gradientPredictor(Seq(area, rooms)))
+      println("Gradient-predicted price: " + gradientPredictor(Seq(area, rooms)))
     }
   }
 }

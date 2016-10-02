@@ -6,9 +6,9 @@ package ru.ifmo.ctddev.ml.hw2
 object GradientDescent extends LinearFitter {
   def cartesianProduct[T](xss: Seq[Seq[T]]): Seq[Seq[T]] = xss match {
     case h +: t => for(xh <- h; xt <- cartesianProduct( t)) yield xh +: xt
-    case _ => Seq()
+    case _ => Seq(Seq())
   }
-  val firstStep : Double = 1
+  val firstStep : Double = 0.5
   val eps : Double = 0.0005
   override def fit(initialCoefficients: Seq[Double],
                      loss: Seq[Double] => Double): Seq[Double] = {
