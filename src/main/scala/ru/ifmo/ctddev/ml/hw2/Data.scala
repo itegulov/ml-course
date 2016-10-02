@@ -14,10 +14,11 @@ object Data {
     }
     val (normAnswers, meanAnswers, sigmaAnswers) = normalizeDoubles(list.map(_.answer))
     val (normFeatures, meanFeatures, sigmaFeatures) = rec(list.map(_.features))
-    val normalized = normFeatures.zip(normAnswers).map {
+    val normObjects = normFeatures.transpose
+    val normalized = normObjects.zip(normAnswers).map {
       case (list1, list2) => Data(list1, list2)
     }
-    (normalized, meanFeatures :+ meanAnswers, sigmaFeatures :+ meanAnswers)
+    (normalized, meanFeatures :+ meanAnswers, sigmaFeatures :+ sigmaAnswers)
   }
 
   def normalizeDoubles(list: Seq[Double]): (Seq[Double], Double, Double) = {

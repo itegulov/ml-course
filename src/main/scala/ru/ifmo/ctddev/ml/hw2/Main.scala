@@ -30,9 +30,17 @@ object Main {
     areaPlot += scatter(houses.map(_.house.area), houses.map(_.price), _ => 20.0, colors = _ => Color.red)
     areaPlot.title = "Area"
 
-    val l = linspace(0, 5000.0)
-    areaPlot += plot(l, l.map(_ * geneticCoefficients.head), '.')
-    areaPlot += plot(l, l.map(_ * gradientCoefficients.head), '.')
+    val areaLinspace = linspace(0, 5000.0)
+    areaPlot += plot(areaLinspace, areaLinspace.map(_ * geneticUnnormalizedCoefficients.head), '.')
+    areaPlot += plot(areaLinspace, areaLinspace.map(_ * gradientUnnormalizedCoefficients.head), '.')
+
+    val normFigure = Figure()
+    val normPlot = normFigure.subplot(0)
+    normPlot += scatter(data.map(_.features.head), data.map(_.answer), _ => 0.01, colors = _ => Color.red)
+
+    val unitLinspace = linspace(-1.0, 1.0)
+    normPlot += plot(unitLinspace, unitLinspace.map(_ * geneticCoefficients.head), '.')
+    normPlot += plot(unitLinspace, unitLinspace.map(_ * gradientCoefficients.head), '.')
 
     while (true) {
       val area = StdIn.readInt()
