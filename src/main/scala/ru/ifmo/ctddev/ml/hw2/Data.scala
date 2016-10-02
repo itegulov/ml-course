@@ -4,7 +4,7 @@ case class Data(features: Seq[Double], answer: Double)
 
 object Data {
   def normalize(list: Seq[Data]): (Seq[Data], Seq[Double], Seq[Double]) = {
-    def rec(lis: Seq[Seq[Double]]): (Seq[Seq[Double]], Seq[Double], Seq[Double]) = list match {
+    def rec(lis: Seq[Seq[Double]]): (Seq[Seq[Double]], Seq[Double], Seq[Double]) = lis match {
       case Seq(Seq(), _*) =>
         (Seq.empty, Seq.empty, Seq.empty)
       case _ =>
