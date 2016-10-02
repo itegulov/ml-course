@@ -12,14 +12,20 @@ object Main {
 
   def main(args: Array[String]): Unit = {
     val houses = HouseWithPrice.parseHouses(getClass.getResourceAsStream("/prices.txt"))
-    val data = Data.normalize(houses.map(_.toData))
+    val (data, means, sigmas) = Data.normalize(houses.map(_.toData))
     val geneticCoefficients = GeneticAlgorithm.fit(Seq(0, 0), Utils.mseLoss(data))
     println(s"Coefficients from genetic algorithm: ${geneticCoefficients.mkString(", ")}")
-    val geneticPredictor = LinearRegression(geneticCoefficients)
+    val geneticPredictor = LinearRegression(Data.unnormalize(geneticCoefficients, means, sigmas))
+
+    val gradientCoefficients = GradientDescent.fit(Seq(0, 0), Utils.mseLoss(data))
+    println(s"Coefficients from gradient algorithm: ${gradientCoefficients.mkString(", ")}")
+    val gradientPredictor = LinearRegression(Data.unnormalize(geneticCoefficients, means, sigmas))
+
     while (true) {
       val area = StdIn.readInt()
       val rooms = StdIn.readInt()
       println("Genetic-predicted price: " + geneticPredictor(Seq(area, rooms)))
+      println("Gradient-predicted price: " + gradientPredictor(Seq(area, rooms)))
     }
   }
 }
