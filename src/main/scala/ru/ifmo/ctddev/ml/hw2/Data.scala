@@ -27,7 +27,12 @@ object Data {
   }
 
   def unnormalize(coefficients: Seq[Double], mean: Seq[Double], sigma: Seq[Double]): Seq[Double] = {
-    for (i <- coefficients.indices)
-      yield coefficients(i) * sigma(i) + mean(i)
+    val sigmaZ = sigma.last
+    val meanZ = mean.last
+    coefficients.zip(sigma).map{
+      case (x, y) => x / y * meanZ
+    } :+ (meanZ - mean.zip(sigma).zip(coefficients).map({
+      case ((x, y), z) => x * z / y
+    }).sum)
   }
 }
