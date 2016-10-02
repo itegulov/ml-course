@@ -3,22 +3,31 @@ package ru.ifmo.ctddev.ml.hw2
 case class Data(features: Seq[Double], answer: Double)
 
 object Data {
-  def normalize(list : Seq[Data]): Seq[Data] = {
-    def rec(lis : Seq[Seq[Double]]) : Seq[Seq[Double]] = {
-      if (lis.head.isEmpty) {
-        Seq()
-      } else {
-        normalizeDoubles(lis.map(_.head)) +: rec(lis.map(_.tail))
-      }
+  def normalize(list: Seq[Data]): (Seq[Data], Seq[Double], Seq[Double]) = {
+    def rec(lis: Seq[Seq[Double]]): (Seq[Seq[Double]], Seq[Double], Seq[Double]) = list match {
+      case Seq(Seq(), _*) =>
+        (Seq.empty, Seq.empty, Seq.empty)
+      case _ =>
+        val (leftNorm, leftMean, leftSigma) = rec(lis.map(_.tail))
+        val (myNorm, myMean, mySigma) = normalizeDoubles(lis.map(_.head))
+        (myNorm +: leftNorm, myMean +: leftMean, mySigma +: leftSigma)
     }
-    rec(list.map(_.features)).zip(normalizeDoubles(list.map(_.answer))).map{
+    val (normAnswers, meanAnswers, sigmaAnswers) = normalizeDoubles(list.map(_.answer))
+    val (normFeatures, meanFeatures, sigmaFeatures) = rec(list.map(_.features))
+    val normalized = normFeatures.zip(normAnswers).map {
       case (list1, list2) => Data(list1, list2)
     }
+    (normalized, meanFeatures :+ meanAnswers, sigmaFeatures :+ meanAnswers)
   }
 
-  def normalizeDoubles(list : Seq[Double]) : Seq[Double] = {
+  def normalizeDoubles(list: Seq[Double]): (Seq[Double], Double, Double) = {
     val mean = list.sum / list.size
     val sigma = Math.sqrt(list.map(x => (x - mean) * (x - mean)).sum / (list.size - 1))
-    list.map(x => (x - mean) / sigma)
+    (list.map(x => (x - mean) / sigma), mean, sigma)
+  }
+
+  def unnormalize(coefficients: Seq[Double], mean: Seq[Double], sigma: Seq[Double]): Seq[Double] = {
+    for (i <- coefficients.indices)
+      yield coefficients(i) * sigma(i) + mean(i)
   }
 }
