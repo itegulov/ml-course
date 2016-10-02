@@ -18,7 +18,7 @@ object Data {
 
   def normalizeDoubles(list : Seq[Double]) : Seq[Double] = {
     val mean = list.sum / list.size
-    val sigma = list.map(x => (x - mean) * (x - mean)).sum
+    val sigma = Math.sqrt(list.map(x => (x - mean) * (x - mean)).sum)
     list.map(x => (x - mean) / sigma)
   }
 }
