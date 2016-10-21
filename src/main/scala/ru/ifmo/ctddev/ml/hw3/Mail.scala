@@ -14,6 +14,6 @@ object Mail {
     val subjectLine = scanner.nextLine().substring("Subject: ".length)
     scanner.nextLine()
     val bodyLine = scanner.nextLine()
-    Mail(subjectLine.split(' ').map(_.toInt), bodyLine.split(' ').map(_.toInt))
+    Mail(subjectLine.split(' ').filterNot(_.isEmpty).map(_.toInt), bodyLine.split(' ').filterNot(_.isEmpty).map(_.toInt))
   }
 }
