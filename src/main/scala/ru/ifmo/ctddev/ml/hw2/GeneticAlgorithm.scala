@@ -9,7 +9,7 @@ object GeneticAlgorithm extends LinearFitter {
       val newBrood = for (
         individual <- brood;
         times <- 1 to 6
-      ) yield individual.map(_ + (Random.nextDouble() * 2 - 1))
+      ) yield individual.map(_ + (Random.nextGaussian() / 3))
 
       brood = newBrood.sortBy(loss).take(50)
     }

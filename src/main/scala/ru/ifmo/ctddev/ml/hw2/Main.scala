@@ -14,19 +14,26 @@ object Main {
     val houses = HouseWithPrice.parseHouses(getClass.getResourceAsStream("/prices.txt"))
     val unnormalizedData = houses.map(_.toData)
     val (data, means, sigmas) = Data.normalize(unnormalizedData)
+    val coolData = unnormalizedData.map {
+      case Data(features, answer) =>
+        Data(features :+ 1.0, answer)
+    }
     val geneticCoefficients = GeneticAlgorithm.fit(Seq(0, 0), Utils.mseLoss(data))
     println(s"Coefficients from genetic algorithm: ${geneticCoefficients.mkString(", ")}")
     val geneticUnnormalizedCoefficients = Data.unnormalize(geneticCoefficients, means, sigmas)
     println(s"Unnormalized coefficients from genetic algorithm: ${geneticUnnormalizedCoefficients.mkString(", ")}")
     val geneticPredictor = LinearRegression(geneticUnnormalizedCoefficients)
-    println(s"MSE for genetic is ${Utils.mseLoss(unnormalizedData)(geneticUnnormalizedCoefficients)}")
+    println(s"MSE for genetic is ${Utils.mseLoss(coolData)(geneticUnnormalizedCoefficients)}")
 
-    val gradientCoefficients = GradientDescent.fit(Seq(0, 0), Utils.mseLoss(data))
+    val gradientCoefficients = GradientDescent.fit(Seq(0, 0), Utils.mseLossDerivative(data))
     println(s"Coefficients from gradient algorithm: ${gradientCoefficients.mkString(", ")}")
     val gradientUnnormalizedCoefficients = Data.unnormalize(gradientCoefficients, means, sigmas)
     println(s"Unnormalized coefficients from gradient algorithm: ${gradientUnnormalizedCoefficients.mkString(", ")}")
     val gradientPredictor = LinearRegression(gradientUnnormalizedCoefficients)
-    println(s"MSE for gradient is ${Utils.mseLoss(unnormalizedData)(gradientUnnormalizedCoefficients)}")
+    println(s"MSE for gradient is ${Utils.mseLoss(coolData)(gradientUnnormalizedCoefficients)}")
+
+    val unnormalizedDebug = Data.unnormalize(Seq(1.02, 0.02), means, sigmas)
+    println(Utils.mseLoss(coolData)(unnormalizedDebug))
 
     val areaFigure = Figure()
     val areaPlot = areaFigure.subplot(0)
