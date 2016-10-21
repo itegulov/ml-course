@@ -22,7 +22,7 @@ object Main {
         case MailWithVerdict(mail, verdict) =>
           if (algorithm(mail) != verdict) 1 else 0
       }.sum
-      error / testSet.length
+      error.toDouble / testSet.length
     }
     println(results)
   }
