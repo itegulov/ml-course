@@ -15,13 +15,18 @@ object SVM {
       }.sum - x * x * lambdas(index) * y - 2) / (x * x * 2))
       lambdas.updated(index, newLambda)
     }
-    def trainProjection(lambdas : Seq[Double], trainSet : Seq[PointWithClass]) : Seq[Double] = {
+    def trainProjection(lambdas : Seq[Double]) : Seq[Double] = {
       ???
     }
     def trainRec(start : Seq[Double], trainSet : Seq[PointWithClass], iter : Int) : Seq[Double] = {
-      ???
+      if (iter == 0) {
+        start
+      } else {
+        trainRec(start.indices.foldRight(start)((i, s) => trainProjection(trainOneCoordinate(s, trainSet, i))),
+          trainSet, iter - 1)
+      }
     }
-    val lambdas = trainRec(Seq.fill(trainSet.size){0}, trainSet, 2000)
+    val lambdas = trainRec(trainProjection(Seq.fill(trainSet.size){0}), trainSet, 2000)
     ???
   }
 }
