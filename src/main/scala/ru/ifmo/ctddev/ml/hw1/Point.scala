@@ -18,6 +18,8 @@ object PointClass {
 case class Point(x: Double, y: Double) {
   def euclideanDistance(other: Point): Double =
     Math.sqrt((other.x - x) * (other.x - x) + (other.y - y) * (other.y - y))
+  def *(other : Point) : Double =
+    other.x * x + other.y * y
 }
 
 case class PointWithClass(point: Point, pointClass: PointClass)
