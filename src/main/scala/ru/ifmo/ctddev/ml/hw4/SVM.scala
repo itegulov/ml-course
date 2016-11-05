@@ -17,19 +17,19 @@ object SVM {
       lambdas.updated(index, if (newLambda > C) C else if (newLambda < 0) 0 else newLambda)
     }
     def trainProjection(lambdas : Seq[Double], ys : Seq[Double]) : Seq[Double] = {
-      val alpha = -lambdas.zip(ys).map((x: Double, y : Double) => x * y).sum / ys.size
-      lambdas.zip(ys).map((x, y) -> (x + alpha * y))
+      val alpha = -lambdas.zip(ys).map{ case (x: Double, y : Double) => x * y }.sum / ys.size
+      lambdas.zip(ys).map { case (x, y) => x + alpha * y }
     }
     def trainRec(start : Seq[Double], trainSet : Seq[PointWithClass], C : Int, iter : Int) : Seq[Double] = {
       if (iter == 0) {
         start
       } else {
         trainRec(start.indices.foldRight(start)((i, s) => trainProjection(trainOneCoordinate(s, trainSet, i, C),
-          trainSet.map(x => toNormY(x.pointClass)))),
+          trainSet.map(x => toNormY(x.pointClass)).map(_.toDouble))),
           trainSet, C, iter - 1)
       }
     }
-    val lambdas: Seq[Double] = trainRec(Seq.fill(trainSet.size)(0), trainSet, ???, 2000)
+    val lambdas: Seq[Double] = trainRec(Seq.fill(trainSet.size)(0), trainSet, 1, 2000)
     val wx = (for ((PointWithClass(Point(tx, _), answer), lambda) <- trainSet.zip(lambdas)) yield {
       lambda * toNormY(answer) * tx
     }).sum
