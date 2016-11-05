@@ -5,24 +5,34 @@ package ru.ifmo.ctddev.ml.hw3
   */
 object BayesClassifier {
   def train(mails: Seq[MailWithVerdict]): Mail => Boolean = {
-    val words = mails.flatMap(x => x.mail.body ++ x.mail.subject).toSet
     val (bad, good) = mails.partition(_.verdict)
-    val badMap = bad.flatMap(x => x.mail.body ++ x.mail.subject)
-      .foldLeft(Map.empty[Int, Int])((count, word) => count + (word -> (count.getOrElse(word, 0) + 1)))
-    val goodMap = good.flatMap(x => x.mail.body ++ x.mail.subject)
-      .foldLeft(Map.empty[Int, Int])((count, word) => count + (word -> (count.getOrElse(word, 0) + 1)))
+    val words = mails.flatMap(x => x.mail.subject ++ x.mail.body).distinct
+
+    val b = bad
+      .flatMap(x => (x.mail.subject ++ x.mail.body).distinct)
+      .foldLeft(Map.empty[Long, Long])((map, word) => map.updated(word, map.getOrElse(word, 0L) + 1))
+      .withDefaultValue(1L)
+    val g = good
+      .flatMap(x => (x.mail.subject ++ x.mail.body).distinct)
+      .foldLeft(Map.empty[Long, Long])((map, word) => map.updated(word, map.getOrElse(word, 0L) + 1))
+      .withDefaultValue(1L)
+
+    val allBad = bad.map(x => x.mail.subject.size + x.mail.body.size).sum
+    val allGood = good.map(x => x.mail.subject.size + x.mail.body.size).sum
+
+    val spamicity = words
+      .filter(word => b.contains(word) && g.contains(word))
+      .filter(word => b(word) != 0)
+      .map(word => word -> g(word).toDouble / b(word)).toMap
+    val considered = words.filter(w => Math.abs(1 - spamicity.getOrElse(w, 0D)) > 0.5).toSet
+
     (mail) => {
-      val ws = mail.body ++ mail.subject
-      val (x, y) = ws.map(x => {
-        val inBad = badMap.getOrElse(x, bad.size)
-        val inGood = goodMap.getOrElse(x, good.size)
-        (Math.log((inBad + inGood) * 1.0 / (bad.size + good.size)), Math.log(inBad * 1.0 / bad.size))
-      }).reduce {
-        (_, _) match {
-          case ((x1, y1), (x2, y2)) => (x1 + x2, y1 + y2)
-        }
-      }
-      Math.exp(x - y) * (bad.size * 1.0 / (bad.size + good.size)) >= 0.5
+      val mailWords = mail.subject ++ mail.body
+      val x = mailWords.collect {
+        case w if considered.contains(w) =>
+          Math.log(b(w).toDouble / g(w))
+      }.sum
+      x > 5
     }
   }
 }
