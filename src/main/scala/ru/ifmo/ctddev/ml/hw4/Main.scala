@@ -17,28 +17,40 @@ object Main {
     pointsPlot.title = "Data points"
   }
 
+  def addPolarFeatures(points: Seq[PointWithClass]): Seq[Data] = {
+    for (PointWithClass(Point(x, y), c) <- points) yield {
+      val classValue = c match {
+        case One => 1
+        case Zero => -1
+      }
+      Data(Seq(x, y, x * x, y * y), classValue)
+    }
+  }
+
+  def toBoolean(intSeq: Seq[Int]): Seq[Int] = {
+    intSeq.map {
+      case 1 => 1
+      case -1 => 0
+      case _ => throw new IllegalArgumentException("Int seq should contains only 1 and -1")
+    }
+  }
+
   val foldNumber = 5
 
   def main(args: Array[String]): Unit = {
-    val samples = PointWithClass.parseData(new File(getClass.getResource("/chips.txt").toURI))
-    val (zeros, ones) = samples.partition(_.pointClass == Zero)
+    val samples = addPolarFeatures(PointWithClass.parseData(new File(getClass.getResource("/chips.txt").toURI)))
+    val (zeros, ones) = samples.partition(_.answer == -1)
 
-    drawPoints(zeros, ones)
+//    drawPoints(zeros, ones)
 
     val folds = KFoldCrossValidation(samples, samples.length)
 
-    val realResults = samples.map(_.pointClass).map {
-      case One => 1
-      case Zero => 0
-    }
-    val results = folds.flatMap {
+    val realResults = toBoolean(samples.map(_.answer))
+    val results = toBoolean(folds.flatMap {
       case (train, test) =>
         val algorithm = SVM.train(train)
-        test.map(_.point).map(algorithm)
-    }.map {
-      case One => 1
-      case Zero => 0
-    }
+        test.map(_.features).map(algorithm)
+    })
     val f1Score = Metric.f1Score(realResults, results)
     println(s"f1 score: $f1Score")
   }
