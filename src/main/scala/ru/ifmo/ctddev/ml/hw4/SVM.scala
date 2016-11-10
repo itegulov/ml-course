@@ -8,6 +8,10 @@ object SVM {
     ???
   }
 
+  def crossProduct(x: Seq[Double], y: Seq[Double]): Double = {
+    x.zip(y).map { case(l, r) => l *r }.sum
+  }
+
   def train(trainSet: Seq[Data]): Seq[Double] => Int = {
     val n = trainSet.head.features.size
     val l = trainSet.size
@@ -28,12 +32,19 @@ object SVM {
       alpha = newAlpha
     }
 
-    val w = for (i <- 0 to n) {
-      for (j <- 0 to l) {
-        ???
-      }
+    val w = (0 until n).map(i =>
+      (0 until l).map(j =>
+        alpha(j) * trainSet(j).answer * trainSet(j).features(i)
+      ).sum
+    )
+    val w0 = crossProduct(w, trainSet.head.features) - trainSet.head.answer
+    testData => {
+      val res: Double = (0 to l).map(i =>
+        alpha(i) * trainSet(i).answer * crossProduct(testData, trainSet(i).features)
+      ).sum - w0
+
+      if (res >= 0) 1 else -1
     }
-    ???
   }
 
 //  private def toNormY(p : PointClass) = {
