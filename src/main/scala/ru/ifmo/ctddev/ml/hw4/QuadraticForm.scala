@@ -18,6 +18,9 @@ case class QuadraticForm(xxC: Double, xC: Double, xyC: Double, yC: Double, yyC: 
       C * other.C
     )
 
+  def *(other: Double): QuadraticForm =
+    QuadraticForm(xxC * other, xC * other, xyC * other, yC * other, yyC * other, C * other)
+
   def substituteY(k: Double, b: Double): QuadraticForm =
     QuadraticForm(
       xxC + xyC * k + k * k,
