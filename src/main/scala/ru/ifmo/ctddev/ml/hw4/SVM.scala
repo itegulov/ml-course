@@ -24,11 +24,11 @@ object SVM {
         if (p != q) {
           findMax(p, q, alpha, trainSet)
         } else {
-          (-1, Seq.empty)
+          (-1D, Seq.empty)
         }
       }
 
-      val (_, newAlpha) = results.sortBy { case ((qValue, _)) => -qValue }.head
+      val (_, newAlpha) = results.sortBy(-_._1).head
       alpha = newAlpha
     }
 
