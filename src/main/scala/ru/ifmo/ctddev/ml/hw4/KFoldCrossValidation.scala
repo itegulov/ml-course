@@ -10,8 +10,8 @@ object KFoldCrossValidation {
   }
 
   def apply[A](samples: Seq[Data], k: Int): Seq[(Seq[Data], Seq[Data])] = {
-    val parts = cut(Random.shuffle(samples), k).toSeq
+    val parts = cut(new Random(1337).shuffle(samples), k).toIndexedSeq
     for (i <- parts.indices)
-      yield (parts.patch(i, Nil, 1).flatten, parts(i))
+      yield (parts.patch(i, Nil, 1).flatten.toIndexedSeq, parts(i).toIndexedSeq)
   }
 }

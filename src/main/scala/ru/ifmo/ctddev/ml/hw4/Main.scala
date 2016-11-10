@@ -23,7 +23,8 @@ object Main {
         case One => 1
         case Zero => -1
       }
-      Data(Seq(x, y, x * x, y * y), classValue)
+      //      Data(Seq(x, y), classValue)
+      Data(Seq(x, y, x * x, y * y, x * y), classValue)
     }
   }
 
@@ -35,20 +36,32 @@ object Main {
     }
   }
 
+  def normalize(seq: Seq[Data]): Seq[Data] = {
+    val mean = seq.head.features.indices.map(i =>
+      seq.map(_.features(i)).sum / seq.size
+    )
+    val maximum = seq.head.features.indices.map(i =>
+      seq.map(_.features(i)).sorted.head
+    )
+    for (Data(features, answer) <- seq) yield {
+      Data(features.zipWithIndex.map { case (feature, index) => (feature - mean(index)) / (maximum(index) - mean(index)) }, answer)
+    }
+  }
+
   val foldNumber = 5
 
   def main(args: Array[String]): Unit = {
-    val samples = addPolarFeatures(PointWithClass.parseData(new File(getClass.getResource("/chips.txt").toURI)))
+    val samples = normalize(addPolarFeatures(PointWithClass.parseData(new File(getClass.getResource("/chips.txt").toURI)))).toIndexedSeq
     val (zeros, ones) = samples.partition(_.answer == -1)
 
-//    drawPoints(zeros, ones)
+    //    drawPoints(zeros, ones)
 
-    val folds = KFoldCrossValidation(samples, samples.length)
+    val folds = KFoldCrossValidation(samples, foldNumber)
 
     val realResults = toBoolean(samples.map(_.answer))
     val results = toBoolean(folds.flatMap {
       case (train, test) =>
-        val algorithm = SVM.train(train)
+        val algorithm = new SVM(train).train
         test.map(_.features).map(algorithm)
     })
     val f1Score = Metric.f1Score(realResults, results)
