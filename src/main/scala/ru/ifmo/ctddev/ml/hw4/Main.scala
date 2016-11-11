@@ -17,14 +17,21 @@ object Main {
     pointsPlot.title = "Data points"
   }
 
-  def addPolarFeatures(points: Seq[PointWithClass]): Seq[Data] = {
+  def toData(points: Seq[PointWithClass]): Seq[Data] = {
     for (PointWithClass(Point(x, y), c) <- points) yield {
       val classValue = c match {
         case One => 1
         case Zero => -1
       }
+      Data(Seq(x, y), classValue)
+    }
+  }
+
+  def addPolarFeatures(points: Seq[Data]): Seq[Data] = {
+    for (Data(Seq(x, y), c) <- points) yield {
       //      Data(Seq(x, y), classValue)
-      Data(Seq(x, y, x * x, y * y, x * y/*, x * x * x, x * x * y, x * y * y, y * y * y*/), classValue)
+      Data(Seq(x, y, x * x, y * y, x * y), c)
+//      Data(Seq(x, y, x * x, y * y, x * y, x * x * x, x * x * y, x * y * y, y * y * y), classValue)
     }
   }
 
@@ -52,10 +59,11 @@ object Main {
 
   def main(args: Array[String]): Unit = {
     val pts = PointWithClass.parseData(new File(getClass.getResource("/chips.txt").toURI))
-    val samples = addPolarFeatures(pts).toIndexedSeq
-    val (zeros, ones) = pts.partition(_.pointClass == Zero)
+    val samples = normalize(addPolarFeatures(normalize(toData(pts)))).toIndexedSeq
+    val pts2 = samples.map { case Data(features, answer) => PointWithClass(Point(features(0), features(1)), if (answer == 1) One else Zero) }
+    val (zeros, ones) = pts2.partition(_.pointClass == Zero)
 
-//    drawPoints(zeros, ones)
+    drawPoints(zeros, ones)
 
     val folds = KFoldCrossValidation(samples, foldNumber)
 

@@ -1,8 +1,8 @@
 package ru.ifmo.ctddev.ml.hw4
 
 class SVM(trainSet: Seq[Data]) {
-  val eps = 5e-3
-  val C = 500
+  val eps = 1e-3
+  val C = 100
 
   // BIDLOKOD
   val n = trainSet.head.features.size
@@ -174,7 +174,7 @@ class SVM(trainSet: Seq[Data]) {
     var numChanged = 0
     var iter = 0
 
-    while ((numChanged > 0 || examineAll) && iter < 1000) {
+    while ((numChanged > 0 || examineAll) && iter < 400) {
       numChanged = 0
       if (examineAll) {
         for (i <- 0 until l) {
@@ -197,6 +197,12 @@ class SVM(trainSet: Seq[Data]) {
     )
     val (_, cInd) = alpha.zipWithIndex.maxBy(_._1)
     val w0 = crossProduct(w, trainSet(cInd).features) - trainSet(cInd).answer
+
+    if (n == 9) {
+      printf("%.2f * x + %.2f * y + %.2f * x^2 + %.2f * x * y + %.2f * y^2 + %.2f * x^3 + %.2f * x^2 * y + %.2f * x * y^2 + %.2f * y^3 = %.2f\n", w(0), w(1), w(2), w(3), w(4), w(5), w(6), w(7), w(8), w0)
+    } else if (n == 5) {
+      printf("%.2f * x + %.2f * y + %.2f * x^2 + %.2f * x * y + %.2f * y^2 = %.2f\n", w(0), w(1), w(2), w(3), w(4), w0)
+    }
     testData => {
       val res: Double = (0 until l).map(i =>
         alpha(i) * trainSet(i).answer * crossProduct(testData, trainSet(i).features)
