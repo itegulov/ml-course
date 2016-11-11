@@ -7,14 +7,16 @@ import ru.ifmo.ctddev.ml.hw5.Kernels.Kernel
   */
 object LowessRegression {
   val eps = 1e-6
-  def getGammas(trainSet: Seq[Data], kernel: Kernel, windowSize: Double): Seq[Double] = {
+  def getGammas(trainSet: Seq[Data], kernel: Kernel, windowSize: Double, kernel2 : Kernel): Seq[Double] = {
     def rec(cur: Seq[Double]): Seq[Double] = {
-      val next = trainSet.zipWithIndex.map { case (di, i) =>
+      println(cur)
+      val a = trainSet.zipWithIndex.map { case (di, i) =>
         val k = trainSet.zipWithIndex.zip(cur).filter { case ((_, j), _) => i != j }.map {
           case ((data, _), gamma) => (gamma * kernel((data.x - di.x) / windowSize), data.y)
         }
         k.map { case (x, y) => x * y }.sum / k.map(_._1).sum
       }
+      val next = a.zip(trainSet.map(_.y)).map{ case (x, y) => kernel2(Math.abs(x - y)) }
       if (next.zip(cur).map{ case (x, y) => (x - y) * (x - y)}.sum < eps) {
         next
       } else {
