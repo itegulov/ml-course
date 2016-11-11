@@ -24,7 +24,7 @@ object Main {
         case Zero => -1
       }
       //      Data(Seq(x, y), classValue)
-      Data(Seq(x, y, x * x, y * y, x * y), classValue)
+      Data(Seq(x, y, x * x, y * y, x * y/*, x * x * x, x * x * y, x * y * y, y * y * y*/), classValue)
     }
   }
 

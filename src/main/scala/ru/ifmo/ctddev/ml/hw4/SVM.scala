@@ -1,19 +1,12 @@
 package ru.ifmo.ctddev.ml.hw4
 
-import scala.util.Random
-
 class SVM(trainSet: Seq[Data]) {
-
-  val eps = 1e-2
-  val C = 100
-
-  val rnd = new Random(3487473837L)
+  val eps = 5e-3
+  val C = 500
 
   // BIDLOKOD
-
   val n = trainSet.head.features.size
   val l = trainSet.size
-
   var alpha = Seq.fill(l)(0D)
 
   def findCurrentAlgorithm: Seq[Double] => Double = {
@@ -22,21 +15,36 @@ class SVM(trainSet: Seq[Data]) {
         alpha(j) * trainSet(j).answer * trainSet(j).features(i)
       ).sum
     )
-    val (_, cInd) = alpha.zipWithIndex.sortBy(_._1).reverse.head
+    val (_, cInd) = alpha.zipWithIndex.maxBy(_._1)
     val w0 = crossProduct(w, trainSet(cInd).features) - trainSet(cInd).answer
-    testData => {
-      val res: Double = (0 until l).map(i =>
+    testData =>
+      (0 until l).map(i =>
         alpha(i) * trainSet(i).answer * crossProduct(testData, trainSet(i).features)
       ).sum - w0
-
-      res
-    }
   }
 
   //p == y, q == x
 
   def getQ(i: Int, j: Int, ai: Double, aj: Double, p: Int, q: Int): QuadraticForm = {
-    if ((j == p || j == q) && i != p && i != q) {
+    i match {
+      case _ if i == p => j match {
+        case _ if j == q => QuadraticForm(0, 0, 1, 0, 0, 0)
+        case _ if j == p => QuadraticForm(0, 0, 0, 0, 1, 0)
+        case _ => QuadraticForm(0, 0, 0, aj, 0, 0)
+      }
+      case _ if i == q => j match {
+        case _ if j == q => QuadraticForm(1, 0, 0, 0, 0, 0)
+        case _ if j == p => QuadraticForm(0, 0, 1, 0, 0, 0)
+        case _ => QuadraticForm(0, aj, 0, 0, 0, 0)
+      }
+      case _ => j match {
+        case _ if j == q => QuadraticForm(0, ai, 0, 0, 0, 0)
+        case _ if j == p => QuadraticForm(0, 0, 0, ai, 0, 0)
+        case _ => QuadraticForm(0, 0, 0, 0, 0, ai * aj)
+      }
+    }
+
+    /*if ((j == p || j == q) && i != p && i != q) {
       getQ(j, i, aj, ai, p, q)
     } else {
       if (i != p && i != q) {
@@ -54,7 +62,7 @@ class SVM(trainSet: Seq[Data]) {
           case _ => QuadraticForm(0, 0, 0, aj, 0, 0)
         }
       }
-    }
+    }*/
   }
 
   def getQ(i: Int, ai: Double, p: Int, q: Int): QuadraticForm = {
@@ -77,21 +85,25 @@ class SVM(trainSet: Seq[Data]) {
 
   def findMax(p: Int, q: Int): Int = {
     if (p == q) return 0
-    val quad = trainSet.indices.zip(alpha).map { case (i, a) => getQ(i, a, p, q) }.reduce(_ + _)
-//    require(Math.abs(quad.calc(alpha(q), alpha(p)) - alpha.sum) < eps)
+    val quad = trainSet.indices.zip(alpha).map {
+      case (i, a) => getQ(i, a, p, q)
+    }.reduce(_ + _)
+    //    require(Math.abs(quad.calc(alpha(q), alpha(p)) - alpha.sum) < eps)
 
-    val minus = for {i <- trainSet.indices
-                     j <- trainSet.indices} yield {
+    val minus = for {
+      i <- trainSet.indices
+      j <- trainSet.indices
+    } yield {
       getQ(i, j, alpha(i), alpha(j), p, q) * cached(i)(j)
     }
-//    require(Math.abs((for {i <- trainSet.indices
-//                          j <- trainSet.indices} yield {
-//      alpha(i) *
-//        trainSet(i).answer *
-//        alpha(j) *
-//        trainSet(j).answer *
-//        crossProduct(trainSet(i).features, trainSet(j).features)
-//    }).sum - minus.reduce(_ + _).calc(alpha(q), alpha(p))) < eps)
+    //    require(Math.abs((for {i <- trainSet.indices
+    //                          j <- trainSet.indices} yield {
+    //      alpha(i) *
+    //        trainSet(i).answer *
+    //        alpha(j) *
+    //        trainSet(j).answer *
+    //        crossProduct(trainSet(i).features, trainSet(j).features)
+    //    }).sum - minus.reduce(_ + _).calc(alpha(q), alpha(p))) < eps)
 
     val k = -trainSet(p).answer * trainSet(q).answer
     val b = -trainSet(p).answer * trainSet.indices
@@ -104,9 +116,11 @@ class SVM(trainSet: Seq[Data]) {
     val H = if (k > 0) Math.min(C, (C - b) / k) else Math.min(C, -b / k)
     val x = if (xv > H) H else if (xv < L) L else xv
     val y = k * x + b
-//    require(qq.xxC < eps)
+    //    require(qq.xxC < eps)
     if (Math.abs(y - alpha(p)) > eps * (y + alpha(p) + eps)) {
-      println(s"New loss: ${qq.calc(x, 0)}")
+      println(s"New loss: ${
+        qq.calc(x, 0)
+      }")
       alpha = alpha.updated(p, y).updated(q, x)
       1
     } else {
@@ -121,10 +135,13 @@ class SVM(trainSet: Seq[Data]) {
     if ((qR < -eps && alpha(q) < C - eps) || (qR > eps && alpha(q) > eps)) {
       if (alpha.count(a => a > eps && a < C - eps) > 1) {
         val (_, p) = alpha.zipWithIndex
-          .filter { case (a, _) => a > eps && a < C - eps }
-          .minBy { case (a, i) =>
-            val pE = currentAlgo(trainSet(i).features) - trainSet(i).answer
-            Math.abs(pE - qE)
+          .filter {
+            case (a, _) => a > eps && a < C - eps
+          }
+          .minBy {
+            case (a, i) =>
+              val pE = currentAlgo(trainSet(i).features) - trainSet(i).answer
+              Math.abs(pE - qE)
           }
         if (findMax(p, q) > 0) {
           return 1
@@ -145,7 +162,9 @@ class SVM(trainSet: Seq[Data]) {
   }
 
   def crossProduct(x: Seq[Double], y: Seq[Double]): Double = {
-    x.zip(y).map { case (l, r) => l * r }.sum
+    x.zip(y).map {
+      case (l, r) => l * r
+    }.sum
   }
 
   def train: Seq[Double] => Int = {
@@ -153,8 +172,9 @@ class SVM(trainSet: Seq[Data]) {
 
     var examineAll = true
     var numChanged = 0
+    var iter = 0
 
-    while ((numChanged > 0 || examineAll)) {
+    while ((numChanged > 0 || examineAll) && iter < 1000) {
       numChanged = 0
       if (examineAll) {
         for (i <- 0 until l) {
@@ -167,7 +187,7 @@ class SVM(trainSet: Seq[Data]) {
       }
       if (examineAll) examineAll = false
       else if (numChanged == 0) examineAll = true
-//      iter += 1
+      iter += 1
     }
 
     val w = (0 until n).map(i =>
@@ -175,7 +195,7 @@ class SVM(trainSet: Seq[Data]) {
         alpha(j) * trainSet(j).answer * trainSet(j).features(i)
       ).sum
     )
-    val (_, cInd) = alpha.zipWithIndex.sortBy(_._1).reverse.head
+    val (_, cInd) = alpha.zipWithIndex.maxBy(_._1)
     val w0 = crossProduct(w, trainSet(cInd).features) - trainSet(cInd).answer
     testData => {
       val res: Double = (0 until l).map(i =>
