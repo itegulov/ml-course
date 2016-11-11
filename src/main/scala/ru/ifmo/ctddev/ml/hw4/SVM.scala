@@ -114,7 +114,7 @@ class SVM(trainSet: Seq[Data]) {
         alpha(j) * trainSet(j).answer * trainSet(j).features(i)
       ).sum
     )
-    val (_, cInd) = alpha.zipWithIndex.sortBy { case (a, _) => -a }.headOption.getOrElse(throw new IllegalStateException())
+    val (_, cInd) = alpha.zipWithIndex.sortBy(_._1).reverse.headOption.getOrElse(throw new IllegalStateException())
     val w0 = crossProduct(w, trainSet(cInd).features) - trainSet(cInd).answer
     testData => {
       val res: Double = (0 until l).map(i =>

@@ -51,14 +51,18 @@ object Main {
   val foldNumber = 5
 
   def main(args: Array[String]): Unit = {
-    val samples = normalize(addPolarFeatures(PointWithClass.parseData(new File(getClass.getResource("/chips.txt").toURI)))).toIndexedSeq
-    val (zeros, ones) = samples.partition(_.answer == -1)
+    val pts = PointWithClass.parseData(new File(getClass.getResource("/chips.txt").toURI))
+    val samples = addPolarFeatures(pts).toIndexedSeq
+    val (zeros, ones) = pts.partition(_.pointClass == Zero)
 
-    //    drawPoints(zeros, ones)
+//    drawPoints(zeros, ones)
 
     val folds = KFoldCrossValidation(samples, foldNumber)
 
-    val realResults = toBoolean(samples.map(_.answer))
+    val realResults = toBoolean(folds.flatMap {
+      case (_, test) =>
+        test.map(_.answer)
+    })
     val results = toBoolean(folds.flatMap {
       case (train, test) =>
         val algorithm = new SVM(train).train
