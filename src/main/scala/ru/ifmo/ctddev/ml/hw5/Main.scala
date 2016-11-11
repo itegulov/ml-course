@@ -7,6 +7,7 @@ import java.io.File
   */
 object Main extends App {
   val data = Data.parseData(new File(getClass.getResource("/non-parametric.csv").toURI))
-  val nWR = NadarayaWatsonRegression.train(data, Kernels.rectangleKernel, 1)
-
+  val nWR = NadarayaWatsonRegression.train(data, Kernels.rectangleKernel, 1, Seq.fill(data.size)(1))
+  val nWRWithLowess = NadarayaWatsonRegression.train(data, Kernels.rectangleKernel, 1,
+    LowessRegression.getGammas(data, Kernels.gaussKernel, 1))
 }
