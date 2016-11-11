@@ -14,10 +14,10 @@ case class QuadraticForm(xxC: Double, xC: Double, xyC: Double, yC: Double, yyC: 
     QuadraticForm(xxC - other.xxC, xC - other.xC, xyC - other.xyC, yC - other.yC, yyC - other.yyC, C - other.C)
 
   def *(other: QuadraticForm): QuadraticForm = {
-    require(Math.abs(xxC * other.xxC) < eps)
-    require(Math.abs(yyC * other.yyC) < eps)
-    require(Math.abs(xxC * other.xC + other.xxC * xC) < eps)    
-    require(Math.abs(yyC * other.yC + other.yyC * yC) < eps)    
+//    require(Math.abs(xxC * other.xxC) < eps)
+//    require(Math.abs(yyC * other.yyC) < eps)
+//    require(Math.abs(xxC * other.xC + other.xxC * xC) < eps)
+//    require(Math.abs(yyC * other.yC + other.yyC * yC) < eps)
     QuadraticForm(
       xxC * other.C + other.xxC * C + xC * other.xC,
       xC * other.C + other.xC * C,
@@ -40,9 +40,9 @@ case class QuadraticForm(xxC: Double, xC: Double, xyC: Double, yC: Double, yyC: 
       0,
       yC * b + yyC * b * b + C
     )
-    for (x <- Seq(1, 2, 3, 4)) {
-      require(Math.abs(calc(x, k * x + b) - ans.calc(x, 0)) < eps)
-    }
+//    for (x <- Seq(1, 2, 3, 4)) {
+//      require(Math.abs(calc(x, k * x + b) - ans.calc(x, 0)) < eps)
+//    }
     ans
   }
 }

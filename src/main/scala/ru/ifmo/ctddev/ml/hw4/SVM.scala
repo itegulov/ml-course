@@ -4,10 +4,34 @@ import scala.util.Random
 
 class SVM(trainSet: Seq[Data]) {
 
-  val eps = 1e-8
+  val eps = 1e-2
   val C = 100
 
   val rnd = new Random(3487473837L)
+
+  // BIDLOKOD
+
+  val n = trainSet.head.features.size
+  val l = trainSet.size
+
+  var alpha = Seq.fill(l)(0D)
+
+  def findCurrentAlgorithm: Seq[Double] => Double = {
+    val w = (0 until n).map(i =>
+      (0 until l).map(j =>
+        alpha(j) * trainSet(j).answer * trainSet(j).features(i)
+      ).sum
+    )
+    val (_, cInd) = alpha.zipWithIndex.sortBy(_._1).reverse.head
+    val w0 = crossProduct(w, trainSet(cInd).features) - trainSet(cInd).answer
+    testData => {
+      val res: Double = (0 until l).map(i =>
+        alpha(i) * trainSet(i).answer * crossProduct(testData, trainSet(i).features)
+      ).sum - w0
+
+      res
+    }
+  }
 
   //p == y, q == x
 
@@ -51,22 +75,23 @@ class SVM(trainSet: Seq[Data]) {
       trainSet(j).answer
   }
 
-  def findMax(p: Int, q: Int, alpha: Seq[Double], C: Double): (Double, Seq[Double]) = {
+  def findMax(p: Int, q: Int): Int = {
+    if (p == q) return 0
     val quad = trainSet.indices.zip(alpha).map { case (i, a) => getQ(i, a, p, q) }.reduce(_ + _)
-    require(Math.abs(quad.calc(alpha(q), alpha(p)) - alpha.sum) < eps)
+//    require(Math.abs(quad.calc(alpha(q), alpha(p)) - alpha.sum) < eps)
 
     val minus = for {i <- trainSet.indices
                      j <- trainSet.indices} yield {
       getQ(i, j, alpha(i), alpha(j), p, q) * cached(i)(j)
     }
-    require(Math.abs((for {i <- trainSet.indices
-                          j <- trainSet.indices} yield {
-      alpha(i) *
-        trainSet(i).answer *
-        alpha(j) *
-        trainSet(j).answer *
-        crossProduct(trainSet(i).features, trainSet(j).features)
-    }).sum - minus.reduce(_ + _).calc(alpha(q), alpha(p))) < eps)
+//    require(Math.abs((for {i <- trainSet.indices
+//                          j <- trainSet.indices} yield {
+//      alpha(i) *
+//        trainSet(i).answer *
+//        alpha(j) *
+//        trainSet(j).answer *
+//        crossProduct(trainSet(i).features, trainSet(j).features)
+//    }).sum - minus.reduce(_ + _).calc(alpha(q), alpha(p))) < eps)
 
     val k = -trainSet(p).answer * trainSet(q).answer
     val b = -trainSet(p).answer * trainSet.indices
@@ -79,8 +104,44 @@ class SVM(trainSet: Seq[Data]) {
     val H = if (k > 0) Math.min(C, (C - b) / k) else Math.min(C, -b / k)
     val x = if (xv > H) H else if (xv < L) L else xv
     val y = k * x + b
-    require(qq.xxC < eps)
-    (qq.calc(x, 0), alpha.updated(p, y).updated(q, x))
+//    require(qq.xxC < eps)
+    if (Math.abs(y - alpha(p)) > eps * (y + alpha(p) + eps)) {
+      println(s"New loss: ${qq.calc(x, 0)}")
+      alpha = alpha.updated(p, y).updated(q, x)
+      1
+    } else {
+      0
+    }
+  }
+
+  def findMax(q: Int): Int = {
+    val currentAlgo = findCurrentAlgorithm
+    val qE = currentAlgo(trainSet(q).features) - trainSet(q).answer
+    val qR = qE * trainSet(q).answer
+    if ((qR < -eps && alpha(q) < C - eps) || (qR > eps && alpha(q) > eps)) {
+      if (alpha.count(a => a > eps && a < C - eps) > 1) {
+        val (_, p) = alpha.zipWithIndex
+          .filter { case (a, _) => a > eps && a < C - eps }
+          .minBy { case (a, i) =>
+            val pE = currentAlgo(trainSet(i).features) - trainSet(i).answer
+            Math.abs(pE - qE)
+          }
+        if (findMax(p, q) > 0) {
+          return 1
+        }
+      }
+      for (i <- 0 until l) if (alpha(i) > eps && alpha(i) < C - eps) {
+        if (findMax(i, q) > 0) {
+          return 1
+        }
+      }
+      for (i <- 0 until l) {
+        if (findMax(i, q) > 0) {
+          return 1
+        }
+      }
+    }
+    0
   }
 
   def crossProduct(x: Seq[Double], y: Seq[Double]): Double = {
@@ -88,36 +149,33 @@ class SVM(trainSet: Seq[Data]) {
   }
 
   def train: Seq[Double] => Int = {
-    val n = trainSet.head.features.size
-    val l = trainSet.size
-    var alpha = Seq.fill(l)(0D)
-    var loss = 0D
     println(s"kek")
-    for (iter <- 0 to 200) {
-      val p = rnd.nextInt(l - 1) + 1
-      val q = rnd.nextInt(p)
 
-      require(p != q)
+    var examineAll = true
+    var numChanged = 0
 
-      val (newLoss, newAlpha) = findMax(p, q, alpha, C)
-
-      require(newLoss > loss - eps)
-      require(Math.abs(newAlpha.zip(trainSet.map(_.answer)).map { case (x, y) => x * y }.sum) < eps)
-      require(newAlpha.forall(i => -eps < i && i < C + eps))
-
-      if (newLoss > loss) {
-        alpha = newAlpha
-        loss = newLoss
+    while ((numChanged > 0 || examineAll)) {
+      numChanged = 0
+      if (examineAll) {
+        for (i <- 0 until l) {
+          numChanged += findMax(i)
+        }
+      } else {
+        for (i <- 0 until l) if (alpha(i) > eps && alpha(i) < C - eps) {
+          numChanged += findMax(i)
+        }
       }
+      if (examineAll) examineAll = false
+      else if (numChanged == 0) examineAll = true
+//      iter += 1
     }
-    println(loss)
 
     val w = (0 until n).map(i =>
       (0 until l).map(j =>
         alpha(j) * trainSet(j).answer * trainSet(j).features(i)
       ).sum
     )
-    val (_, cInd) = alpha.zipWithIndex.sortBy(_._1).reverse.headOption.getOrElse(throw new IllegalStateException())
+    val (_, cInd) = alpha.zipWithIndex.sortBy(_._1).reverse.head
     val w0 = crossProduct(w, trainSet(cInd).features) - trainSet(cInd).answer
     testData => {
       val res: Double = (0 until l).map(i =>
