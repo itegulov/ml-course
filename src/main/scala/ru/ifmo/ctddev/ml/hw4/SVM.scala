@@ -4,13 +4,14 @@ import scala.util.Random
 
 class SVM(trainSet: Seq[Data]) {
 
+  val eps = 1e-8
   val C = 100
 
   val rnd = new Random(3487473837L)
 
   //p == y, q == x
 
-  def getQ(i: Int, j: Int, ai : Double, aj : Double, p: Int, q: Int): QuadraticForm = {
+  def getQ(i: Int, j: Int, ai: Double, aj: Double, p: Int, q: Int): QuadraticForm = {
     if ((j == p || j == q) && i != p && i != q) {
       getQ(j, i, aj, ai, p, q)
     } else {
@@ -32,7 +33,7 @@ class SVM(trainSet: Seq[Data]) {
     }
   }
 
-  def getQ(i: Int, ai : Double, p: Int, q: Int): QuadraticForm = {
+  def getQ(i: Int, ai: Double, p: Int, q: Int): QuadraticForm = {
     i match {
       case _ if i == p => QuadraticForm(0, 0, 0, 1, 0, 0)
       case _ if i == q => QuadraticForm(0, 1, 0, 0, 0, 0)
@@ -50,12 +51,23 @@ class SVM(trainSet: Seq[Data]) {
       trainSet(j).answer
   }
 
-  def findMax(p: Int, q: Int, alpha: Seq[Double], C : Double): (Double, Seq[Double]) = {
-    val quad = trainSet.indices.zip(alpha).map { case (i, a) => getQ(i, a, p, q)}.reduce(_ + _)
-    val minus = for { i <- trainSet.indices
-          j <- trainSet.indices } yield {
+  def findMax(p: Int, q: Int, alpha: Seq[Double], C: Double): (Double, Seq[Double]) = {
+    val quad = trainSet.indices.zip(alpha).map { case (i, a) => getQ(i, a, p, q) }.reduce(_ + _)
+    require(Math.abs(quad.calc(alpha(q), alpha(p)) - alpha.sum) < eps)
+
+    val minus = for {i <- trainSet.indices
+                     j <- trainSet.indices} yield {
       getQ(i, j, alpha(i), alpha(j), p, q) * cached(i)(j)
     }
+    require(Math.abs((for {i <- trainSet.indices
+                          j <- trainSet.indices} yield {
+      alpha(i) *
+        trainSet(i).answer *
+        alpha(j) *
+        trainSet(j).answer *
+        crossProduct(trainSet(i).features, trainSet(j).features)
+    }).sum - minus.reduce(_ + _).calc(alpha(q), alpha(p))) < eps)
+
     val k = -trainSet(p).answer * trainSet(q).answer
     val b = -trainSet(p).answer * trainSet.indices
       .filter(i => i != p && i != q)
@@ -66,28 +78,13 @@ class SVM(trainSet: Seq[Data]) {
     val L = if (k > 0) Math.max(0, -b / k) else Math.max(0, (C - b) / k)
     val H = if (k > 0) Math.min(C, (C - b) / k) else Math.min(C, -b / k)
     val x = if (xv > H) H else if (xv < L) L else xv
-    def qValue(xx: Double) = xx * xx * qq.xxC + xx * qq.xC + qq.C
-    val xvValue = qValue(x)
-    val lValue = qValue(L)
-    val hValue = qValue(H)
-    if (xvValue < 0 && lValue < 0 && hValue < 0) {
-      println("EMMM")
-    }
-//    println(xv)
-    if (xvValue > lValue && xvValue > hValue) {
-      val y = k * x + b
-      (xvValue, alpha.updated(p, y).updated(q, x))
-    } else if (lValue > hValue) {
-      val y = k * L + b
-      (lValue, alpha.updated(p, y).updated(q, L))
-    } else {
-      val y = k * H + b
-      (hValue, alpha.updated(p, y).updated(q, H))
-    }
+    val y = k * x + b
+    require(qq.xxC < eps)
+    (qq.calc(x, 0), alpha.updated(p, y).updated(q, x))
   }
 
   def crossProduct(x: Seq[Double], y: Seq[Double]): Double = {
-    x.zip(y).map { case(l, r) => l *r }.sum
+    x.zip(y).map { case (l, r) => l * r }.sum
   }
 
   def train: Seq[Double] => Int = {
@@ -96,15 +93,21 @@ class SVM(trainSet: Seq[Data]) {
     var alpha = Seq.fill(l)(0D)
     var loss = 0D
     println(s"kek")
-    for (iter <- 0 to 1000) {
+    for (iter <- 0 to 200) {
       val p = rnd.nextInt(l - 1) + 1
       val q = rnd.nextInt(p)
+
+      require(p != q)
+
       val (newLoss, newAlpha) = findMax(p, q, alpha, C)
+
+      require(newLoss > loss - eps)
+      require(Math.abs(newAlpha.zip(trainSet.map(_.answer)).map { case (x, y) => x * y }.sum) < eps)
+      require(newAlpha.forall(i => -eps < i && i < C + eps))
+
       if (newLoss > loss) {
         alpha = newAlpha
         loss = newLoss
-      } else if (newLoss < loss - 0.001) {
-        println("CHE")
       }
     }
     println(loss)
