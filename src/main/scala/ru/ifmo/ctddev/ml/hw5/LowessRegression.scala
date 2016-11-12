@@ -14,7 +14,7 @@ object LowessRegression {
         trainSet.zipWithIndex
           .filter { case (_, j) => i != j }
           .map { case (d, _) => Math.abs(d.x - data.x) }
-          .sortBy(i => i).toIndexedSeq(k)
+          .sorted.toIndexedSeq(k)
       }
       val a = trainSet.zipWithIndex.map { case (di, i) =>
         val k = trainSet.zipWithIndex.zip(cur)
@@ -24,8 +24,9 @@ object LowessRegression {
           }
         k.map { case (x, y) => x * y }.sum / k.map(_._1).sum
       }
-      val magic = a.zip(trainSet.map(_.y)).map { case (x, y) => Math.abs(x - y) }.maxBy(i => i)
-      val next = a.zip(trainSet.map(_.y)).map { case (x, y) => kernel2(Math.abs(x - y) / magic) }
+      val e = a.zip(trainSet.map(_.y)).map { case (x, y) => Math.abs(x - y) }
+      val magic = e.sorted.toIndexedSeq(e.size / 2) * 6
+      val next = e.map(x => kernel2(x / magic))
       if (next.zip(cur).map { case (x, y) => (x - y) * (x - y) }.sum < eps) {
         next
       } else {
