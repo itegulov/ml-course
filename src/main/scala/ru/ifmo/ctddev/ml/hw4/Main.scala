@@ -6,6 +6,7 @@ import java.io.File
 import breeze.plot._
 import ru.ifmo.ctddev.ml.Metric
 import ru.ifmo.ctddev.ml.hw1._
+import ru.ifmo.ctddev.ml.hw1
 
 object Main {
 
@@ -55,6 +56,15 @@ object Main {
     }
   }
 
+  def wilcoxon(x1: Seq[Double], x2: Seq[Double]): Double = {
+    val abses = x1.zip(x2).map { case (a, b) => Math.abs(a - b) }
+    val signes = x1.zip(x2).map { case (a, b) => if (a - b >= 0) 1 else -1 }
+    val reduced = abses.zip(signes).filter { case (a, _) => a != 0 }
+    val sortedReduced = reduced.sortBy(_._1)
+    val w = sortedReduced.zipWithIndex.map { case ((_, sign), r) => sign * (r + 1) }.sum
+    w
+  }
+
   val foldNumber = 5
 
   def main(args: Array[String]): Unit = {
@@ -67,16 +77,40 @@ object Main {
 
     val folds = KFoldCrossValidation(samples, foldNumber)
 
-    val realResults = toBoolean(folds.flatMap {
+    val realResults = folds.map {
       case (_, test) =>
         test.map(_.answer)
-    })
-    val results = toBoolean(folds.flatMap {
+    }.map(toBoolean)
+    val results = folds.map {
       case (train, test) =>
         val algorithm = new SVM(train).train
         test.map(_.features).map(algorithm)
-    })
-    val f1Score = Metric.f1Score(realResults, results)
+    }.map(toBoolean)
+    val f1Score = Metric.f1Score(realResults.flatten, results.flatten)
+    val knnPts = hw1.Main.normalize(hw1.Main.polarize(pts))
+    val kNNfolds = hw1.KFoldCrossValidation(knnPts, foldNumber)
+    val kNNRealResults = kNNfolds.map {
+      case (_, test) =>
+        test.map(_.pointClass).map(x => if (x == Zero) 0 else 1)
+    }
+    val kNNResults = kNNfolds.map {
+      case (train, test) =>
+        val algorithm = KNNMethod.train(train, 13, Distances.euclidean, Distances.euclidean)
+        test.map(_.point).map(algorithm).map(x => if (x == Zero) 0 else 1)
+    }
+    val kNNf1Score = Metric.f1Score(kNNRealResults.flatten, kNNResults.flatten)
     println(s"f1 score: $f1Score")
+    println(s"f1 score: $kNNf1Score")
+    val foldF1 = results.zip(realResults).map {
+      case (x, y) => Metric.f1Score(x, y) * 100
+    }
+    val kNNFoldF1 = kNNResults.zip(kNNRealResults).map {
+      case (x, y) => Metric.f1Score(x, y) * 100
+    }
+    val sigma = foldF1.zip(kNNFoldF1).map {
+      case (x, y) => (x - y) * (x - y) / x
+    }.sum
+    println(s"Chi square: $sigma")
+    println(s"Wilcoxon: ${wilcoxon(foldF1, kNNFoldF1)}")
   }
 }

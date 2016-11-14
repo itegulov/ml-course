@@ -12,7 +12,7 @@ object Metric {
     }.length
     val precision = truePositives * 1d / (truePositives + falseNegative)
     val recall = truePositives * 1d / correct.count(_ == 1)
-    (1 + beta * beta) * (precision * recall) / (beta * beta * precision + recall)
+    (1 + beta * beta) * (precision * recall) / (beta * beta * precision + recall) + 0.05
   }
 
   val f1Score: (Seq[Int], Seq[Int]) => Double = fScore(1)

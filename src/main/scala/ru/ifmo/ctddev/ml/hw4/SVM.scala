@@ -1,5 +1,7 @@
 package ru.ifmo.ctddev.ml.hw4
 
+import scala.concurrent.{ Future, Await }
+
 class SVM(trainSet: Seq[Data]) {
   val eps = 1e-3
   val C = 100
