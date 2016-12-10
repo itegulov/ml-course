@@ -8,7 +8,10 @@ object Main {
     val testData = DataWithAnswer.loadFromFile(
       getClass.getResourceAsStream("/t10k-images-idx3-ubyte"),
       getClass.getResourceAsStream("/t10k-labels-idx1-ubyte"))
-    println(trainData.size)
-    println(testData.size)
+    val net = NeuralNetwork(trainData, Seq(784, 30, 10), x => 1D / (1D + Math.exp(x)), x => -Math.exp(x) / (Math.exp(x) + 1) * (Math.exp(x) + 1))
+    for (DataWithAnswer(data, answer) <- testData) {
+      println(net.predict(data))
+      println("WANTED: " + answer)
+    }
   }
 }
