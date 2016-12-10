@@ -65,7 +65,7 @@ object Main {
     w
   }
 
-  val foldNumber = 5
+  val foldNumber = 10
 
   def main(args: Array[String]): Unit = {
     val pts = PointWithClass.parseData(new File(getClass.getResource("/chips.txt").toURI))

@@ -6,7 +6,6 @@ class SVM(trainSet: Seq[Data]) {
   val eps = 1e-3
   val C = 100
 
-  // BIDLOKOD
   val n = trainSet.head.features.size
   val l = trainSet.size
   var alpha = Seq.fill(l)(0D)
@@ -45,26 +44,6 @@ class SVM(trainSet: Seq[Data]) {
         case _ => QuadraticForm(0, 0, 0, 0, 0, ai * aj)
       }
     }
-
-    /*if ((j == p || j == q) && i != p && i != q) {
-      getQ(j, i, aj, ai, p, q)
-    } else {
-      if (i != p && i != q) {
-        QuadraticForm(0, 0, 0, 0, 0, ai * aj)
-      } else if (i == q) {
-        j match {
-          case _ if j == q => QuadraticForm(1, 0, 0, 0, 0, 0)
-          case _ if j == p => QuadraticForm(0, 0, 1, 0, 0, 0)
-          case _ => QuadraticForm(0, aj, 0, 0, 0, 0)
-        }
-      } else {
-        j match {
-          case _ if j == q => QuadraticForm(0, 0, 1, 0, 0, 0)
-          case _ if j == p => QuadraticForm(0, 0, 0, 0, 1, 0)
-          case _ => QuadraticForm(0, 0, 0, aj, 0, 0)
-        }
-      }
-    }*/
   }
 
   def getQ(i: Int, ai: Double, p: Int, q: Int): QuadraticForm = {
@@ -90,7 +69,6 @@ class SVM(trainSet: Seq[Data]) {
     val quad = trainSet.indices.zip(alpha).map {
       case (i, a) => getQ(i, a, p, q)
     }.reduce(_ + _)
-    //    require(Math.abs(quad.calc(alpha(q), alpha(p)) - alpha.sum) < eps)
 
     val minus = for {
       i <- trainSet.indices
@@ -98,15 +76,6 @@ class SVM(trainSet: Seq[Data]) {
     } yield {
       getQ(i, j, alpha(i), alpha(j), p, q) * cached(i)(j)
     }
-    //    require(Math.abs((for {i <- trainSet.indices
-    //                          j <- trainSet.indices} yield {
-    //      alpha(i) *
-    //        trainSet(i).answer *
-    //        alpha(j) *
-    //        trainSet(j).answer *
-    //        crossProduct(trainSet(i).features, trainSet(j).features)
-    //    }).sum - minus.reduce(_ + _).calc(alpha(q), alpha(p))) < eps)
-
     val k = -trainSet(p).answer * trainSet(q).answer
     val b = -trainSet(p).answer * trainSet.indices
       .filter(i => i != p && i != q)
@@ -118,7 +87,6 @@ class SVM(trainSet: Seq[Data]) {
     val H = if (k > 0) Math.min(C, (C - b) / k) else Math.min(C, -b / k)
     val x = if (xv > H) H else if (xv < L) L else xv
     val y = k * x + b
-    //    require(qq.xxC < eps)
     if (Math.abs(y - alpha(p)) > eps * (y + alpha(p) + eps)) {
       println(s"New loss: ${
         qq.calc(x, 0)

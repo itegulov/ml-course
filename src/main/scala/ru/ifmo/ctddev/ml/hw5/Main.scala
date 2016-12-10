@@ -19,29 +19,46 @@ object Main extends App {
   val data = Data.parseData(new File(getClass.getResource("/non-parametric.csv").toURI))
   val xs = 0D to 60D by 0.5
 
-  draw(Plot()
-    .withScatter(data.map(_.x), data.map(_.y), ScatterOptions().name("data").mode(ScatterMode.Marker))
-    .withScatter(xs, xs.map(t(Kernels.rectangleKernel, 1)), ScatterOptions().name("rectangle"))
-    .withScatter(xs, xs.map(t(Kernels.triangleKernel, 1)), ScatterOptions().name("triangle"))
-    .withScatter(xs, xs.map(t(Kernels.qudraticKernel, 1)), ScatterOptions().name("quadratic"))
-    .withScatter(xs, xs.map(t(Kernels.quarticKernel, 1)), ScatterOptions().name("quartic"))
-    .withScatter(xs, xs.map(t(Kernels.gaussKernel, 1)), ScatterOptions().name("gauss")),
-    s"${folderName}kernel_comparing"
+  def mse(algo: Double => Double): Double = {
+    Math.sqrt(data.map {
+      case Data(_, x, y) =>
+        val myY = algo(x)
+        (myY - y) * (myY - y)
+    }.sum / data.size)
+  }
+
+  val kernels = Seq(
+    (Kernels.rectangleKernel, "Rectangle"),
+    (Kernels.triangleKernel, "Triangle"),
+    (Kernels.qudraticKernel, "Quadratic"),
+    (Kernels.quarticKernel, "Quartic"),
+    (Kernels.gaussKernel, "Gauss")
   )
 
-  draw(Plot()
-    .withScatter(data.map(_.x), data.map(_.y), ScatterOptions().name("data").mode(ScatterMode.Marker))
-    .withScatter(xs, xs.map(t(Kernels.gaussKernel, 0.1)), ScatterOptions().name("h = 0.1"))
-    .withScatter(xs, xs.map(t(Kernels.gaussKernel, 0.5)), ScatterOptions().name("h = 0.5"))
-    .withScatter(xs, xs.map(t(Kernels.gaussKernel, 1)), ScatterOptions().name("h = 1"))
-    .withScatter(xs, xs.map(t(Kernels.gaussKernel, 2)), ScatterOptions().name("h = 2"))
-    .withScatter(xs, xs.map(t(Kernels.gaussKernel, 3)), ScatterOptions().name("h = 3")),
-    s"${folderName}h_comparing"
-  )
+  var plot = Plot().withScatter(data.map(_.x), data.map(_.y), ScatterOptions().name("data").mode(ScatterMode.Marker))
 
-  val nWR = NadarayaWatsonRegression.train(data, Kernels.quarticKernel, 1, Seq.fill(data.size)(1))
+  for ((kernel, name) <- kernels) {
+    val algo = t(kernel, 1)
+    println(s"Nadaraya Watson ($name h=1): ${mse(algo)}")
+    plot = plot.withScatter(xs, xs.map(algo), ScatterOptions().name(name))
+  }
+  draw(plot, s"${folderName}kernel_comparing")
+
+  val hs = Seq(0.1, 0.5, 1D, 2D, 3D)
+
+  var plot2 = Plot().withScatter(data.map(_.x), data.map(_.y), ScatterOptions().name("data").mode(ScatterMode.Marker))
+  for (h <- hs) {
+    val algo = t(Kernels.gaussKernel, h)
+    println(s"Nadaraya Watson (Gauss h=$h): ${mse(algo)}")
+    plot2 = plot2.withScatter(xs, xs.map(algo), ScatterOptions().name(s"h = $h"))
+  }
+  draw(plot2, s"${folderName}h_comparing")
+
+  val nWR = NadarayaWatsonRegression.train(data, Kernels.quarticKernel, 3, Seq.fill(data.size)(1))
+  println(s"Nadaraya Watson (Qxuartic h=1): ${mse(nWR)}")
   val gammas: Seq[Double] = LowessRegression.getGammas(data, Kernels.quarticKernel, Kernels.quarticKernel, 10)
-  val nWRWithLowess = NadarayaWatsonRegression.train(data, Kernels.quarticKernel, 1, gammas)
+  val nWRWithLowess = NadarayaWatsonRegression.train(data, Kernels.quarticKernel, 3, gammas)
+  println(s"Nadaraya Watson with lowess (quartic h=1): ${mse(nWRWithLowess)}")
   draw(Plot()
     .withScatter(data.map(_.x), data.map(_.y), ScatterOptions().name("data").mode(ScatterMode.Marker))
     .withScatter(xs, xs.map(nWR), ScatterOptions().name("without LOWESS"))
