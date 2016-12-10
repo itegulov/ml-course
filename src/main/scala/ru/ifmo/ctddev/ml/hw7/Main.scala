@@ -8,10 +8,15 @@ object Main {
     val testData = DataWithAnswer.loadFromFile(
       getClass.getResourceAsStream("/t10k-images-idx3-ubyte"),
       getClass.getResourceAsStream("/t10k-labels-idx1-ubyte"))
-    val net = NeuralNetwork(trainData, Seq(784, 30, 10), x => 1D / (1D + Math.exp(x)), x => -Math.exp(x) / (Math.exp(x) + 1) * (Math.exp(x) + 1))
-    for (DataWithAnswer(data, answer) <- testData) {
-      println(net.predict(data))
+    val sigmoid: Double => Double = x => 1D / (1D + Math.exp(-x))
+    val sigmoidPrime: Double => Double = x => sigmoid(x) * (1 - sigmoid(x))
+    val net = NeuralNetwork(trainData, Seq(784, 30, 10), sigmoid, sigmoidPrime, 1.0, 1)
+    val results = for (DataWithAnswer(data, answer) <- testData) yield {
+      val predicted = net.predict(data).zipWithIndex.maxBy(_._1)._2
+      println("GOT: " + predicted)
       println("WANTED: " + answer)
+      if (predicted != answer) 0 else 1
     }
+    println(results.sum.toDouble / testData.size)
   }
 }
