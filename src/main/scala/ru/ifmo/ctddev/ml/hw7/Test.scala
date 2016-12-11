@@ -8,7 +8,6 @@ import javax.swing.{ JPanel, JFrame, JButton, WindowConstants }
 
 import scala.collection.mutable.ArrayBuffer
 import scala.io.StdIn
-import scala.util.Random
 
 class Test(trainData: Seq[DataWithAnswer]) extends JPanel {
   private val mousePositions                 = ArrayBuffer.empty[Point]
@@ -34,16 +33,6 @@ class Test(trainData: Seq[DataWithAnswer]) extends JPanel {
                           3,
                           fileOpt = Some(new File("memes_2016-12-11T15:41:10.800.txt")))
 
-//  val randomData = trainData(Random.nextInt(trainData.size)).data.grid
-//  for {
-//    i <- 0 until 28
-//    j <- 0 until 28
-//  } {
-//    val rgb = 1F - randomData(i)(j).toFloat
-//    bufferedImageGraphics.setColor(new Color(rgb, rgb, rgb))
-//    bufferedImageGraphics.fillRect(j * 28, i * 28, 28, 28)
-//  }
-
   setLayout(new BorderLayout())
   private val flowPanel = new JPanel(new FlowLayout())
   add(flowPanel, BorderLayout.PAGE_END)
@@ -55,7 +44,6 @@ class Test(trainData: Seq[DataWithAnswer]) extends JPanel {
   addMouseMotionListener(new MouseMotionAdapter {
     override def mouseDragged(e: MouseEvent): Unit = {
       if (e.getX < 28 * 28 && e.getY < 28 * 28) {
-        println("GOTCHA")
         mousePositions += e.getPoint
         bufferedImageGraphics.setColor(Color.BLACK)
         bufferedImageGraphics.fillOval(e.getX, e.getY, 50, 50)
@@ -89,7 +77,6 @@ class Test(trainData: Seq[DataWithAnswer]) extends JPanel {
 
   clearButton.addActionListener(new ActionListener {
     override def actionPerformed(e: ActionEvent): Unit = {
-      println("Clearing")
       bufferedImageGraphics.setColor(Color.WHITE)
       bufferedImageGraphics.fillRect(0, 0, 28 * 28, 28 * 28)
       repaint()
@@ -151,22 +138,11 @@ class Test(trainData: Seq[DataWithAnswer]) extends JPanel {
 
 object Test {
   def main(args: Array[String]): Unit = {
-//    val trainData = DataWithAnswer.loadFromFile(
-//      getClass.getResourceAsStream("/train-images-idx3-ubyte"),
-//      getClass.getResourceAsStream("/train-labels-idx1-ubyte"))
-//    val testData = DataWithAnswer.loadFromFile(
-//      getClass.getResourceAsStream("/t10k-images-idx3-ubyte"),
-//      getClass.getResourceAsStream("/t10k-labels-idx1-ubyte"))
     val frame = new JFrame()
     frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE)
     val panel = new Test(Seq(DataWithAnswer(Data(IndexedSeq.empty), 0), DataWithAnswer(Data(IndexedSeq.empty), 0)))
     frame.setContentPane(panel)
     frame.setSize(28 * 28, 28 * 28)
     frame.setVisible(true)
-//    val results = for (DataWithAnswer(data, answer) <- Seq.empty) yield {
-//      val predicted = panel.net.predict(data).zipWithIndex.maxBy(_._1)._2
-//      if (predicted != answer) 0 else 1
-//    }
-//    println(results.sum.toDouble / testData.size)
   }
 }
