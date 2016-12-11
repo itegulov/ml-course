@@ -14,7 +14,7 @@ object Main {
       getClass.getResourceAsStream("/t10k-labels-idx1-ubyte"))
     val sigmoid: Double => Double = x => 1D / (1D + Math.exp(-x))
     val sigmoidPrime: Double => Double = x => sigmoid(x) * (1 - sigmoid(x))
-    val net = NeuralNetwork(trainData, Seq(784, 30, 10), sigmoid, sigmoidPrime, 10, 3.0, 30, fileOpt = Some(new File("memes_2016-12-11T12:06:12.814.txt")))
+    val net = NeuralNetwork(trainData, Seq(784, 40, 20, 20, 10), sigmoid, sigmoidPrime, 10, 3.0, 15)
     val results = for (DataWithAnswer(data, answer) <- testData) yield {
       val predicted = net.predict(data).zipWithIndex.maxBy(_._1)._2
       println("GOT: " + predicted)
