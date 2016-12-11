@@ -1,5 +1,7 @@
 package ru.ifmo.ctddev.ml.hw7
 
+import java.io.{File, PrintWriter}
+
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 
@@ -10,8 +12,38 @@ case class NeuralNetwork(trainSet: Seq[DataWithAnswer],
                          batchSize: Int,
                          eta: Double,
                          iterations: Int) {
-  val weights: Array[Array[Array[Double]]] = Array.ofDim(sizes.size - 1)
-  val biases: Array[Array[Double]]        = Array.ofDim(sizes.size - 1)
+  def saveToFile(f : File): Unit = {
+    val out = new PrintWriter(f)
+    out.println(weights.length)
+    for {
+      l <- weights.indices
+    } {
+      out.println(weights(l).length)
+      for {
+        j <- weights(l).indices
+      } {
+        out.print(weights(l)(j).length)
+        weights(l)(j).foreach(x => out.print(" " + x))
+        out.println()
+      }
+      out.println()
+    }
+    out.println(biases.length)
+    for {
+      l <- biases.indices
+    } {
+      out.print(biases(l).length)
+      biases(l).foreach(x => out.print(" " + x))
+      out.println()
+    }
+  }
+
+  def loadFromFile(f : File): Unit = {
+
+  }
+
+  var weights: Array[Array[Array[Double]]] = Array.ofDim(sizes.size - 1)
+  var biases: Array[Array[Double]]        = Array.ofDim(sizes.size - 1)
   init()
   for (i <- 1 to iterations) {
     trainIteration()
