@@ -7,11 +7,35 @@ case class NeuralNetwork(trainSet: Seq[DataWithAnswer],
                          sizes: Seq[Int],
                          sigma: Double => Double,
                          sigmaPrime: Double => Double,
+                         batchSize: Int,
                          eta: Double,
                          iterations: Int) {
+  var seed = 1337
 
-  val w: Array[Array[Array[Double]]] = Array.ofDim(sizes.size - 1)
-  val b: Array[Array[Double]]        = Array.ofDim(sizes.size - 1)
+  def myRandom(): Int = {
+    seed = seed * 2298349 + 98237
+    seed
+  }
+
+  def myDoubleRandom(): Double = {
+    (myRandom() % 17737).toDouble / 17737
+  }
+
+  def myGaussRandom(): Double = {
+    var v1: Double = .0
+    var v2: Double = .0
+    var s: Double = .0
+    do {
+      v1 = myDoubleRandom() // between -1 and 1
+      v2 = myDoubleRandom()
+      s = v1 * v1 + v2 * v2
+    } while (s >= 1 || s == 0)
+    val multiplier: Double = StrictMath.sqrt(-2 * StrictMath.log(s) / s)
+    v1 * multiplier
+  }
+
+  val weights: Array[Array[Array[Double]]] = Array.ofDim(sizes.size - 1)
+  val biases: Array[Array[Double]]        = Array.ofDim(sizes.size - 1)
   init()
   for (i <- 1 to iterations) {
     trainIteration()
@@ -19,88 +43,99 @@ case class NeuralNetwork(trainSet: Seq[DataWithAnswer],
   }
 
   def mul(matrix: Array[Array[Double]], vector: Seq[Double]): IndexedSeq[Double] = {
+    require(matrix.forall(_.length == matrix(0).length))
+    require(matrix(0).length == vector.length)
     for (m <- matrix) yield {
       m.zip(vector).map { case (x, y) => x * y }.sum
     }
   }
 
   def init(): Unit = {
-    w.indices.zip(sizes.zip(sizes.tail)).foreach { case (i, (x, y)) => w(i) = Array.ofDim(x, y) }
+    weights.indices.zip(sizes.zip(sizes.tail)).foreach { case (i, (x, y)) => weights(i) = Array.ofDim(x, y) }
     for {
-      l <- w.indices
-      j <- w(l).indices
-      k <- w(l)(j).indices
+      l <- weights.indices
+      j <- weights(l).indices
+      k <- weights(l)(j).indices
     } {
-      w(l)(j)(k) = Random.nextGaussian()
+      weights(l)(j)(k) = myGaussRandom()
     }
-    b.indices.zip(sizes.tail).foreach { case (i, x) => b(i) = Array.ofDim(x) }
+    biases.indices.zip(sizes.tail).foreach { case (i, x) => biases(i) = Array.ofDim(x) }
     for {
-      l <- b.indices
-      j <- b(l).indices
+      l <- biases.indices
+      j <- biases(l).indices
     } {
-      b(l)(j) = Random.nextGaussian()
+      biases(l)(j) = myGaussRandom()
     }
   }
 
-  def trainStep(d: DataWithAnswer): Unit = {
-    val answer: Seq[Double] = Seq.fill[Double](sizes.last)(0).updated(d.answer, 1D)
-    val (zs, as)            = calcZA(d.data)
-    val deltas              = calcDeltas(d.data, as, zs, answer)
-    for {
-      l <- w.indices
-      j <- w(l).indices
-      k <- w(l)(j).indices
-    } {
-      w(l)(j)(k) -= eta * as(l)(j) * deltas(l)(k)
+  def trainStep(ds: Seq[DataWithAnswer]): Unit = {
+    val assAndDeltas = for (d <- ds) yield {
+      val answer   = Seq.fill(sizes.last)(0D).updated(d.answer, 1D)
+      val (zs, as) = calcZA(d.data)
+      val deltas   = calcDeltas(d.data, as, zs, answer)
+      (as, deltas)
     }
     for {
-      l <- b.indices
-      j <- b(l).indices
+      l            <- weights.indices
+      j            <- weights(l).indices
+      k            <- weights(l)(j).indices
+      (as, deltas) <- assAndDeltas
     } {
-      b(l)(j) -= eta * deltas(l)(j)
+      weights(l)(j)(k) -= eta * as(l)(j) * deltas(l)(k)
+    }
+    for {
+      l           <- biases.indices
+      j           <- biases(l).indices
+      (_, deltas) <- assAndDeltas
+    } {
+      biases(l)(j) -= eta * deltas(l)(j)
     }
   }
 
   def trainIteration(): Unit = {
-    trainSet.zipWithIndex.foreach {
+    trainSet.grouped(batchSize).zipWithIndex.foreach {
       case (x, i) =>
         trainStep(x)
-        if (i % 1000 == 0) {
-          println(s"SAMPLE $i")
+        if (i % 100 == 0) {
+          println(s"SAMPLE ${i * batchSize}")
         }
     }
   }
 
   def calcZA(d: Data): (Seq[Seq[Double]], Seq[Seq[Double]]) = {
-    val ansZ = ArrayBuffer[Seq[Double]]()
-    val ansA = ArrayBuffer[Seq[Double]]()
-    var x    = d.grid.reduce(_ ++ _)
-    ansA += x
-    w.zip(b).foreach {
-      case (weights, bl) =>
-        val z = mul(weights.transpose, x).zip(bl).map { case (x, y) => x + y }
-        ansZ += z
-        x = z.map(sigma)
-        ansA += x
+    val zs = ArrayBuffer[Seq[Double]]()
+    val activations = ArrayBuffer[Seq[Double]]()
+    val x    = d.grid.reduce(_ ++ _)
+    activations += x
+    var activation = x
+    weights.zip(biases).foreach {
+      case (w, b) =>
+        val z = mul(w.transpose, activation).zip(b).map { case (x, y) => x + y }
+        zs += z
+        activation = z.map(sigma)
+        activations += activation
     }
-    (ansZ, ansA)
+    (zs, activations)
   }
 
   def calcDeltas(d: Data,
-                 as: Seq[Seq[Double]],
+                 activations: Seq[Seq[Double]],
                  zs: Seq[Seq[Double]],
-                 answer: Seq[Double]): Seq[Seq[Double]] = {
-    val ans = ArrayBuffer[Seq[Double]]()
-    var delta = as.last.zip(answer).map { case (x, y) => x - y }.zip(zs.last.map(sigmaPrime)).map {
+                 y: Seq[Double]): Seq[Seq[Double]] = {
+    val nablaW = ArrayBuffer.empty[Seq[Double]]
+    val nablaB = ArrayBuffer.empty[Seq[Double]]
+    val deltas = ArrayBuffer[Seq[Double]]()
+    var delta = activations.last.zip(y).map { case (x, y) => x - y }.zip(zs.last.map(sigmaPrime)).map {
       case (x, y) => x * y
     }
-    ans += delta
+    nablaB += delta
+    deltas += delta
     sizes.indices.tail.init.reverse.foreach(l => {
-      val oldDelta = delta
-      delta = mul(w(l), delta).zip(zs(l - 1).map(sigmaPrime)).map { case (x, y) => x * y }
-      ans += delta
+      val sp = zs(l - 1).map(sigmaPrime)
+      delta = mul(weights(l), delta).zip(sp).map { case (x, y) => x * y }
+      deltas += delta
     })
-    ans.reverse
+    deltas.reverse
   }
 
   def predict(data: Data): Seq[Double] = {
