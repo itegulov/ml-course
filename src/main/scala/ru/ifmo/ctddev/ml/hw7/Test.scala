@@ -3,9 +3,14 @@ package ru.ifmo.ctddev.ml.hw7
 import java.awt._
 import java.awt.event.{ActionEvent, ActionListener, MouseEvent, MouseMotionAdapter}
 import java.awt.image.BufferedImage
+import java.io.File
+import javax.swing.{ JPanel, JFrame, JButton, WindowConstants }
+
 import javax.swing.{JButton, JFrame, JPanel, WindowConstants}
 
 import scala.collection.mutable.ArrayBuffer
+import scala.io.StdIn
+import scala.util.Random
 
 class Test(trainData: Seq[DataWithAnswer]) extends JPanel {
   private val mousePositions = ArrayBuffer.empty[Point]
@@ -21,7 +26,17 @@ class Test(trainData: Seq[DataWithAnswer]) extends JPanel {
   bufferedImageGraphics.fillRect(0, 0, 28 * 28, 28 * 28)
   bufferedImageGraphics.setColor(Color.BLACK)
   bufferedImageGraphics.drawRect(0, 0, 28 * 28, 28 * 28)
-  val net = NeuralNetwork(trainData, Seq(784, 30, 10), sigmoid, sigmoidPrime, 10, 3.0, 3)
+  val net = NeuralNetwork(trainData, Seq(784, 30, 10), sigmoid, sigmoidPrime, 10, 3.0, 3, fileOpt = Some(new File("memes_2016-12-11T12:06:12.814.txt")))
+
+  val randomData = trainData(Random.nextInt(trainData.size)).data.grid
+  for {
+    i <- 0 until 28
+    j <- 0 until 28
+  } {
+    val rgb = 1F - randomData(i)(j).toFloat
+    bufferedImageGraphics.setColor(new Color(rgb, rgb, rgb))
+    bufferedImageGraphics.fillRect(j * 28, i * 28, 28, 28)
+  }
 
   setLayout(new BorderLayout())
   private val flowPanel = new JPanel(new FlowLayout())
@@ -57,6 +72,7 @@ class Test(trainData: Seq[DataWithAnswer]) extends JPanel {
         j <- 0 until w
       } {
         if (bufferedImage.getRGB(i, j) == Color.BLACK.getRGB) {
+          grid(j * 28 / h)(i * 28 / w) += cost
 //          grid(i * 28 / h)(j * 28 / w) += cost
           sumi += i
           sumj += j
@@ -86,11 +102,12 @@ class Test(trainData: Seq[DataWithAnswer]) extends JPanel {
       } {
         val rgb = 1F - grid(i)(j).toFloat
         smallBufferedImageGraphics.setColor(new Color(rgb, rgb, rgb))
-        smallBufferedImageGraphics.fillRect(i * 10, j * 10, 10, 10)
+        smallBufferedImageGraphics.fillRect(j * 10, i * 10, 10, 10)
       }
       val predicted = net.predict(data)
       println("Predicted " + predicted)
       println("It is " + predicted.zipWithIndex.maxBy(_._1)._2)
+      net.trainStep(Seq(DataWithAnswer(data, StdIn.readInt())))
       repaint()
     }
   })
