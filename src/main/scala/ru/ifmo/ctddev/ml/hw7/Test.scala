@@ -25,7 +25,19 @@ class Test(trainData: Seq[DataWithAnswer]) extends JPanel {
 
   button.addActionListener(new ActionListener {
     override def actionPerformed(e: ActionEvent): Unit = {
-      bufferedImage
+      val grid : Array[Array[Double]] = Array.fill(28, 28)(0)
+      val h: Int = bufferedImage.getHeight
+      val w: Int = bufferedImage.getWidth
+      val cost: Double = 1 / ((h.toDouble / 28D) * (w.toDouble / 28D))
+      for {
+        i <- 0 until h
+        j <- 0 until w
+      } {
+        if (bufferedImage.getRGB(i, j) == Color.BLACK.getRGB) {
+          grid(i * 28 / h)(j * 28 / w) += cost
+        }
+      }
+      val data = Data(grid.map(_.toIndexedSeq).toIndexedSeq)
     }
   })
 
