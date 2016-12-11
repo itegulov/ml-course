@@ -10,30 +10,6 @@ case class NeuralNetwork(trainSet: Seq[DataWithAnswer],
                          batchSize: Int,
                          eta: Double,
                          iterations: Int) {
-  var seed = 1337
-
-  def myRandom(): Int = {
-    seed = seed * 2298349 + 98237
-    seed
-  }
-
-  def myDoubleRandom(): Double = {
-    (myRandom() % 17737).toDouble / 17737
-  }
-
-  def myGaussRandom(): Double = {
-    var v1: Double = .0
-    var v2: Double = .0
-    var s: Double = .0
-    do {
-      v1 = myDoubleRandom() // between -1 and 1
-      v2 = myDoubleRandom()
-      s = v1 * v1 + v2 * v2
-    } while (s >= 1 || s == 0)
-    val multiplier: Double = StrictMath.sqrt(-2 * StrictMath.log(s) / s)
-    v1 * multiplier
-  }
-
   val weights: Array[Array[Array[Double]]] = Array.ofDim(sizes.size - 1)
   val biases: Array[Array[Double]]        = Array.ofDim(sizes.size - 1)
   init()
@@ -57,14 +33,14 @@ case class NeuralNetwork(trainSet: Seq[DataWithAnswer],
       j <- weights(l).indices
       k <- weights(l)(j).indices
     } {
-      weights(l)(j)(k) = myGaussRandom()
+      weights(l)(j)(k) = Random.nextGaussian()
     }
     biases.indices.zip(sizes.tail).foreach { case (i, x) => biases(i) = Array.ofDim(x) }
     for {
       l <- biases.indices
       j <- biases(l).indices
     } {
-      biases(l)(j) = myGaussRandom()
+      biases(l)(j) = Random.nextGaussian()
     }
   }
 
@@ -81,14 +57,14 @@ case class NeuralNetwork(trainSet: Seq[DataWithAnswer],
       k            <- weights(l)(j).indices
       (as, deltas) <- assAndDeltas
     } {
-      weights(l)(j)(k) -= eta * as(l)(j) * deltas(l)(k)
+      weights(l)(j)(k) -= eta / batchSize * as(l)(j) * deltas(l)(k)
     }
     for {
       l           <- biases.indices
       j           <- biases(l).indices
       (_, deltas) <- assAndDeltas
     } {
-      biases(l)(j) -= eta * deltas(l)(j)
+      biases(l)(j) -= eta / batchSize * deltas(l)(j)
     }
   }
 
