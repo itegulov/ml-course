@@ -1,11 +1,9 @@
 package ru.ifmo.ctddev.ml.hw7
 
-import java.awt.event.{ ActionEvent, ActionListener, MouseMotionAdapter, MouseEvent }
 import java.awt._
+import java.awt.event.{ActionEvent, ActionListener, MouseEvent, MouseMotionAdapter}
 import java.awt.image.BufferedImage
-import javax.swing.{ JPanel, JFrame, JButton, WindowConstants }
-
-import ru.ifmo.ctddev.ml.hw7.Main.getClass
+import javax.swing.{JButton, JFrame, JPanel, WindowConstants}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -51,14 +49,34 @@ class Test(trainData: Seq[DataWithAnswer]) extends JPanel {
       val h: Int = bufferedImage.getHeight
       val w: Int = bufferedImage.getWidth
       val cost: Double = 1 / ((h.toDouble / 28D) * (w.toDouble / 28D))
+      var sumi = 0
+      var sumj = 0
+      var cnt = 0
       for {
         i <- 0 until h
         j <- 0 until w
       } {
         if (bufferedImage.getRGB(i, j) == Color.BLACK.getRGB) {
-          grid(i * 28 / h)(j * 28 / w) += cost
+//          grid(i * 28 / h)(j * 28 / w) += cost
+          sumi += i
+          sumj += j
+          cnt += 1
         }
       }
+      val ci: Int = sumi / cnt
+      val cj: Int = sumj / cnt
+      val divi: Int = Math.max(h - ci, ci)
+      val divj: Int = Math.max(w - cj, cj)
+
+      for {
+        i <- 0 until h
+        j <- 0 until w
+      } {
+        if (bufferedImage.getRGB(i, j) == Color.BLACK.getRGB) {
+          grid(14 + (i - ci) * 14/ divi)(14 + (j - cj) * 14/ divj) += cost
+        }
+      }
+
       val data = Data(grid.map(_.toIndexedSeq).toIndexedSeq)
       smallBufferedImageGraphics.setColor(Color.WHITE)
       smallBufferedImageGraphics.fillRect(0, 0, 28 * 10, 28 * 10)
