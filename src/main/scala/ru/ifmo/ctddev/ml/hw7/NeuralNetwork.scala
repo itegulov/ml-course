@@ -1,6 +1,8 @@
 package ru.ifmo.ctddev.ml.hw7
 
-import java.io.{File, PrintWriter}
+import java.io.{ PrintWriter, File }
+import java.time.{ ZonedDateTime, LocalDateTime }
+import java.util.Scanner
 
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
@@ -11,8 +13,10 @@ case class NeuralNetwork(trainSet: Seq[DataWithAnswer],
                          sigmaPrime: Double => Double,
                          batchSize: Int,
                          eta: Double,
-                         iterations: Int) {
-  def saveToFile(f : File): Unit = {
+                         iterations: Int,
+                         fileOpt: Option[File] = None) {
+  def saveToFile(f: File): Unit = {
+    f.createNewFile()
     val out = new PrintWriter(f)
     out.println(weights.length)
     for {
@@ -36,18 +40,47 @@ case class NeuralNetwork(trainSet: Seq[DataWithAnswer],
       biases(l).foreach(x => out.print(" " + x))
       out.println()
     }
+    out.close()
   }
 
-  def loadFromFile(f : File): Unit = {
-
+  def loadFromFile(file: File): Unit = {
+    val scanner = new Scanner(file)
+    val weightsSize = scanner.nextInt()
+    weights = Array.ofDim(weightsSize)
+    for (i <- 0 until weightsSize) {
+      val weigthsSize2 = scanner.nextInt()
+      weights(i) = Array.ofDim(weigthsSize2)
+      for (j <- 0 until weigthsSize2) {
+        val weightsSize3 = scanner.nextInt()
+        weights(i)(j) = Array.ofDim(weightsSize3)
+        for (k <- 0 until weightsSize3) {
+          weights(i)(j)(k) = scanner.nextDouble()
+        }
+      }
+    }
+    val biasSize = scanner.nextInt()
+    biases = Array.ofDim(biasSize)
+    for (i <- 0 until biasSize) {
+      val biasSize2 = scanner.nextInt()
+      biases(i) = Array.ofDim(biasSize2)
+      for (j <- 0 until biasSize2) {
+        biases(i)(j) = scanner.nextDouble()
+      }
+    }
   }
 
   var weights: Array[Array[Array[Double]]] = Array.ofDim(sizes.size - 1)
-  var biases: Array[Array[Double]]        = Array.ofDim(sizes.size - 1)
-  init()
-  for (i <- 1 to iterations) {
-    trainIteration()
-    println(s"ITERATION $i")
+  var biases: Array[Array[Double]]         = Array.ofDim(sizes.size - 1)
+  fileOpt match {
+    case Some(file) =>
+      loadFromFile(file)
+    case None =>
+      init()
+      for (i <- 1 to iterations) {
+        trainIteration()
+        println(s"ITERATION $i")
+      }
+      saveToFile(new File("memes_" + LocalDateTime.now() + ".txt"))
   }
 
   def mul(matrix: Array[Array[Double]], vector: Seq[Double]): IndexedSeq[Double] = {
@@ -59,7 +92,9 @@ case class NeuralNetwork(trainSet: Seq[DataWithAnswer],
   }
 
   def init(): Unit = {
-    weights.indices.zip(sizes.zip(sizes.tail)).foreach { case (i, (x, y)) => weights(i) = Array.ofDim(x, y) }
+    weights.indices.zip(sizes.zip(sizes.tail)).foreach {
+      case (i, (x, y)) => weights(i) = Array.ofDim(x, y)
+    }
     for {
       l <- weights.indices
       j <- weights(l).indices
@@ -111,9 +146,9 @@ case class NeuralNetwork(trainSet: Seq[DataWithAnswer],
   }
 
   def calcZA(d: Data): (Seq[Seq[Double]], Seq[Seq[Double]]) = {
-    val zs = ArrayBuffer[Seq[Double]]()
+    val zs          = ArrayBuffer[Seq[Double]]()
     val activations = ArrayBuffer[Seq[Double]]()
-    val x    = d.grid.reduce(_ ++ _)
+    val x           = d.grid.reduce(_ ++ _)
     activations += x
     var activation = x
     weights.zip(biases).foreach {
@@ -133,9 +168,10 @@ case class NeuralNetwork(trainSet: Seq[DataWithAnswer],
     val nablaW = ArrayBuffer.empty[Seq[Double]]
     val nablaB = ArrayBuffer.empty[Seq[Double]]
     val deltas = ArrayBuffer[Seq[Double]]()
-    var delta = activations.last.zip(y).map { case (x, y) => x - y }.zip(zs.last.map(sigmaPrime)).map {
-      case (x, y) => x * y
-    }
+    var delta =
+      activations.last.zip(y).map { case (x, y) => x - y }.zip(zs.last.map(sigmaPrime)).map {
+        case (x, y) => x * y
+      }
     nablaB += delta
     deltas += delta
     sizes.indices.tail.init.reverse.foreach(l => {

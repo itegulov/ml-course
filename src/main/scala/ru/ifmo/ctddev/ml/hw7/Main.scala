@@ -1,6 +1,7 @@
 package ru.ifmo.ctddev.ml.hw7
 
 import java.awt.{ Color, Graphics2D }
+import java.io.File
 import javax.swing.JFrame
 
 object Main {
