@@ -25,13 +25,13 @@ class Test(trainData: Seq[DataWithAnswer]) extends JPanel {
   bufferedImageGraphics.setColor(Color.BLACK)
   bufferedImageGraphics.drawRect(0, 0, 28 * 28, 28 * 28)
   val net = NeuralNetwork(trainData,
-                          Seq(784, 40, 20, 20, 10),
+                          Seq(784, 30, 10),
                           sigmoid,
                           sigmoidPrime,
                           10,
                           3.0,
                           3,
-                          fileOpt = Some(new File("memes_2016-12-11T15:41:10.800.txt")))
+                          fileOpt = Some(new File("memes_2016-12-11T12:06:12.814.txt")))
 
   setLayout(new BorderLayout())
   private val flowPanel = new JPanel(new FlowLayout())
